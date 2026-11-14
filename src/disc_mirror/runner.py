@@ -25,8 +25,12 @@ class Estimate:
         return sum(self.model_usd.values()) + self.judge_usd
 
 
-def _tokens(spec: ModelSpec, text: str) -> int:
-    return litellm.token_counter(model=spec.litellm_id, text=text)
+def _tokens(text: str) -> int:
+    """Estimates tokens with litellm's bundled tiktoken encoding, whatever the model.
+
+    Model-specific tokenizers can download files, so every model is counted the same local way.
+    """
+    return litellm.token_counter(model="gpt-4", text=text)
 
 
 def _usd(spec: ModelSpec, tokens_in: int, tokens_out: int) -> float:
@@ -42,7 +46,7 @@ def estimate_cost(tasks: list[Task], config: Config) -> Estimate:
     for m in config.models:
         prompts[m.name] = len(tasks) * len(VERSIONS) * config.samples
         model_usd[m.name] = sum(
-            _usd(m, _tokens(m, t.versions[v]), m.max_tokens) * config.samples
+            _usd(m, _tokens(t.versions[v]), m.max_tokens) * config.samples
             for t in tasks
             for v in VERSIONS
         )
@@ -50,7 +54,7 @@ def estimate_cost(tasks: list[Task], config: Config) -> Estimate:
     for t in (t for t in tasks if t.grader == "pairwise"):
         for m in config.models:
             for j in config.judges:
-                tokens_in = _tokens(j, t.versions["neutral"]) + 2 * m.max_tokens
+                tokens_in = _tokens(t.versions["neutral"]) + 2 * m.max_tokens
                 calls = len(STYLES) * config.samples * 2
                 judge_usd += calls * _usd(j, tokens_in, j.max_tokens)
     return Estimate(prompts, model_usd, judge_usd)
