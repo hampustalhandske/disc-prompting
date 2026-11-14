@@ -46,7 +46,7 @@ def model(name, max_tokens, price_in=0.0, price_out=0.0):
 
 @pytest.fixture
 def task_dir_with(tmp_path):
-    """Copy the fixture tasks to a temp dir, apply `mutate(dict)` to one, return the dir and file."""
+    """Copy the fixture tasks to a temp dir, apply `mutate(dict)` to one, return dir and file."""
 
     def make(mutate, task_id="corr-fix-01"):
         d = tmp_path / "tasks"

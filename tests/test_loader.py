@@ -1,5 +1,4 @@
 import pytest
-
 from conftest import FIXTURE_TASKS
 
 BAD_TASKS = {

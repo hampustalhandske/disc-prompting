@@ -2,7 +2,6 @@ import json
 
 import pytest
 import yaml
-
 from conftest import FIXTURE_TASKS, VERSIONS, model
 
 RECORD_FIELDS = {
