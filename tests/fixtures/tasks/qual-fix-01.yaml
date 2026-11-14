@@ -1,0 +1,11 @@
+id: qual-fix-01
+area: quality
+grader: pairwise
+rationale: "Fixture for the quality area."
+versions:
+  neutral: "qual-fix-01 neutral text"
+  D: "qual-fix-01 D text"
+  i: "qual-fix-01 i text"
+  S: "qual-fix-01 S text"
+  C: "qual-fix-01 C text"
+
