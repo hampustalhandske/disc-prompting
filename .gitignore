@@ -1,0 +1,16 @@
+.env*
+.claude/settings.local.json
+.claude/never-push
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+data/
+runs/
+models/
+*.gguf
+*.safetensors
+*.bin
