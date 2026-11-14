@@ -60,13 +60,15 @@ def task_dir_with(tmp_path):
     return make
 
 
-def run_cli(*args, block_network=False):
+def run_cli(*args, block_network=False, net_log=None):
     """Run the installed `disc-run` command from the repo root and return the completed process."""
     import os
 
     env = dict(os.environ)
     if block_network:
         env["PYTHONPATH"] = str(NETBLOCK)
+        if net_log:
+            env["NETBLOCK_LOG"] = str(net_log)
     exe = Path(sys.executable).parent / "disc-run"
     return subprocess.run(
         [str(exe), *args], cwd=ROOT, env=env, capture_output=True, text=True

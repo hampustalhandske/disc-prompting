@@ -11,15 +11,18 @@ def has_number(text, value, tol=1e-6):
     return any(abs(n - value) <= tol for n in numbers(text))
 
 
-def test_dry_run_makes_no_network_call_and_prints_total():
+def test_dry_run_makes_no_network_call_and_prints_total(tmp_path):
+    attempts = tmp_path / "net_attempts.log"
     result = run_cli(
         "--tasks", str(FIXTURE_TASKS),
         "--config", str(ROOT / "config" / "models.yaml"),
         "--dry-run",
         block_network=True,
+        net_log=attempts,
     )
     assert result.returncode == 0, result.stderr
     assert "total" in result.stdout.lower()
+    assert not attempts.exists() or attempts.read_text() == "", attempts.read_text()
 
 
 def test_dry_run_multiplies_versions_samples_models_and_judges_pairwise_only(make_config):
