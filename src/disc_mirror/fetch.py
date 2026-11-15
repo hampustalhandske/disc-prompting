@@ -65,7 +65,9 @@ def fetch_clip(directory: Path) -> None:
         return
     import open_clip
 
-    open_clip.create_model_and_transforms("ViT-B-32", pretrained="openai", cache_dir=str(directory))
+    open_clip.create_model_and_transforms(
+        "ViT-B-32-quickgelu", pretrained="openai", cache_dir=str(directory)
+    )
     print(f"clip: ViT-B-32 to {directory}")
 
 

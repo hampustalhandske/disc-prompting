@@ -97,9 +97,9 @@ def load_clip(cache_dir: str | Path = "data/clip") -> Callable[[bytes, str], flo
     from PIL import Image
 
     model, _, preprocess = open_clip.create_model_and_transforms(
-        "ViT-B-32", pretrained="openai", cache_dir=str(cache_dir)
+        "ViT-B-32-quickgelu", pretrained="openai", cache_dir=str(cache_dir)
     )
-    tokenizer = open_clip.get_tokenizer("ViT-B-32")
+    tokenizer = open_clip.get_tokenizer("ViT-B-32-quickgelu")
     model.eval()
 
     def score(png: bytes, text: str) -> float:
