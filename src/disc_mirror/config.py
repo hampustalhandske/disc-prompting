@@ -1,6 +1,6 @@
 """Model config: budget, sampling settings, tested models and judges."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from pathlib import Path
 
 import yaml
@@ -29,6 +29,17 @@ def load_config(path: str | Path) -> Config:
     path = Path(path)
     raw = yaml.safe_load(path.read_text())
     try:
+        unknown = set(raw) - {f.name for f in fields(Config)}
+        if unknown:
+            raise ValueError(f"unknown keys {sorted(unknown)}")
+        samples, temp, budget = raw["samples"], raw["temperature"], raw["budget_usd"]
+        if not isinstance(samples, int) or isinstance(samples, bool) or samples < 1:
+            raise ValueError("samples must be an integer >= 1")
+        if any(isinstance(x, bool) or not isinstance(x, int | float) for x in (temp, budget)):
+            raise ValueError("temperature and budget_usd must be numbers")
+        names = [m["name"] for m in raw["models"] + raw["judges"]]
+        if len(names) != len(set(names)):
+            raise ValueError("duplicate model or judge names")
         return Config(
             budget_usd=raw["budget_usd"],
             samples=raw["samples"],
@@ -36,5 +47,5 @@ def load_config(path: str | Path) -> Config:
             models=[ModelSpec(**m) for m in raw["models"]],
             judges=[ModelSpec(**m) for m in raw["judges"]],
         )
-    except (KeyError, TypeError) as exc:
+    except (KeyError, TypeError, ValueError) as exc:
         raise ValueError(f"{path}: invalid model config: {exc!r}") from exc
