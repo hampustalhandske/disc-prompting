@@ -25,7 +25,7 @@ class Config:
 
 
 def load_config(path: str | Path) -> Config:
-    """Reads the model config YAML; a missing key raises KeyError naming it."""
+    """Reads the model config YAML; a missing or unknown key raises ValueError naming the file."""
     path = Path(path)
     raw = yaml.safe_load(path.read_text())
     try:
