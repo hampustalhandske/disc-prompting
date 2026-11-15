@@ -1,113 +1,129 @@
-# Milestone 3: text-graders
+# Milestone 4: embed-graders
 
-Serves: charter item 3 (Graders), the three text measures: correctness by exact match,
-mirroring by text counts, open-ended quality by blind pairwise judging
-Estimate: ~320 net production lines of a 400 budget
-Mode: away: open the PR after review and continue with the queue
+Serves: charter item 3 (Graders), the local half: creativity by embedding semantic distance
+(DAT) and SVG by render, constraint checks and CLIP similarity to the brief; plus the three
+charter wording edits from the m2 handoff
+Estimate: ~280 net production lines of a 400 budget
+Mode: with you: show the review to Hampus before the PR
 
 ## Done when
 
-1. `uv run disc-grade exact --runs <jsonl> --tasks tasks` prints accuracy per model × version,
-   on a hand-made run file, with no network calls.
-2. `uv run disc-grade mirror --runs <jsonl> --tasks tasks` prints, per model × style, each
-   feature's mean difference from the same model's neutral answers.
-3. `uv run disc-grade pairwise --runs <jsonl> --tasks tasks --config config/models.yaml`
-   is one command away from a live judge run; with an injected completion function it
-   writes 2 judge records (both orders) per judge × styled answer, and prints win rates
-   per model × style, overall and per judge.
-4. Each grader has at least one test on a hand-made sample answer with a known score.
-5. Each grader's rationale is written down: in its module docstring and in a README
-   "Graders" section.
-6. `uv run ruff check . && uv run pytest -q` passes.
+1. `uv sync` installs resvg-py, open_clip_torch and torch with no Homebrew or system libraries.
+2. `uv run disc-fetch` downloads GloVe 840B 300d and CLIP ViT-B-32 (OpenAI weights) into
+   `data/`, which git ignores. The tests never call it.
+3. `uv run disc-grade dat --runs <jsonl> --tasks tasks` prints the mean DAT score per
+   model × version, with the count of replies too short to score.
+4. `uv run disc-grade svg --runs <jsonl> --tasks tasks` prints, per model × version, the
+   share that renders, the mean share of constraints met and the mean CLIP similarity.
+5. Each grader has at least one test on a hand-made answer with a known score, using tiny
+   fake vectors and a fake CLIP scorer (no download, no network).
+6. Each grader's rationale is in its module docstring and in the README "Graders" section.
+7. `docs/CHARTER.md` carries the three wording edits (listed under Contracts), and the README
+   says a real run needs `uv sync`, `uv run disc-fetch` and the API keys.
+8. The mirroring directive list drops the context-free words "now", "first", "next",
+   "start", "stop", "use", "ask", "tell", "set" and "send".
+9. `uv run ruff check . && uv run pytest -q` passes.
 
 ## Must not
 
-- Add a dependency, service or paid API without asking (vaderSentiment approved by Hampus).
-- Make an API call anywhere: tests inject the completion function.
-- Change the task-file or run-record contracts, the runner, or the tasks.
-- Show the judge which answer is styled, the style name, the task id or the model name.
-- Write the DAT or SVG graders (m4).
-- Add tests beyond the seams below: the repo's test/prod ratio is 1.49 against a 0.5–0.7 band.
+- Add a dependency beyond resvg-py, open_clip_torch and torch (approved by Hampus) without asking.
+- Make an API call anywhere. Downloads happen only in `disc-fetch`, which tests never run.
+- Commit anything under `data/`.
+- Import torch or open_clip when grading anything but SVG (keeps `disc-grade exact` fast).
+- Change the task-file, run-record or SVG-constraint contracts, the runner or the tasks.
+- Train or fine-tune anything: GloVe and CLIP are used as published.
 
 ## Contracts
 
-All graders read run records (the m1 shape) from a JSONL file plus the task files. Only
-records whose task has the matching `grader` are graded; others are ignored.
+All graders read run records (the m1 shape) plus the task files, and grade only records
+whose task has the matching `grader`. A record with `output: None` scores as unscored
+(DAT) or not rendered (SVG).
 
-### Exact match (task 1, `src/disc_mirror/graders/exact.py`)
+### Local model files (task 3 writes, tasks 1 and 2 read)
+
+```
+data/glove/words.txt     one word per line; lowercase alphabetic words from the first
+                         200,000 lines of glove.840B.300d.txt, in file order
+data/glove/vectors.npy   float32 array, shape (len(words), 300), row i = words.txt line i
+data/clip/               open_clip cache_dir for ViT-B-32, pretrained="openai"
+```
+
+### DAT (task 1, `src/disc_mirror/graders/dat.py`)
 
 ```python
-extract_answer(output: str | None) -> str | None
-    # value after "ANSWER:" on the last non-empty line that has one; None if none
-grade_exact(records: list[dict], tasks: list[Task]) -> list[dict]
-    # one per exact_match record:
-    # {"task_id", "version", "model", "sample", "answer": str | None, "correct": bool}
+load_glove(directory="data/glove") -> dict[str, numpy.ndarray]
+dat_score(words: list[str], vectors: dict) -> float | None
+    # Olson et al. (2021): lowercase and strip each line, keep words found in vectors, take
+    # the first 7; None if fewer than 7. Score = mean cosine distance over all 21 pairs x 100.
+grade_dat(records, tasks, vectors) -> list[dict]
+    # {"task_id", "version", "model", "sample", "valid_words": int, "score": float | None}
 ```
 
-Comparison: both sides stripped, case-folded, trailing `.` removed. A missing answer is wrong.
-
-### Mirroring (task 1, `src/disc_mirror/graders/mirror.py`)
+### SVG (task 2, `src/disc_mirror/graders/svg.py`)
 
 ```python
-text_features(output: str | None) -> dict[str, float]
-    # {"words", "hedges", "exclamations", "directives", "sentiment"}
-    # hedges and directives per 100 words, from fixed word lists in the module;
-    # exclamations = count of "!"; sentiment = mean VADER compound over sentences, in [-1, 1]
-mirror_deltas(records: list[dict], tasks: list[Task]) -> dict[tuple[str, str], dict[str, float]]
-    # (model, style) -> feature -> mean over (task, sample) of styled minus neutral
+extract_svg(output: str | None) -> str | None
+    # contents of the first ```svg (or ```xml / bare ```) block holding <svg; else the first
+    # <svg ...>...</svg> span; None if neither
+check_constraints(svg: str, constraints: list[str]) -> list[bool]
+    # one bool per constraint, grammar from m2; tags match without namespace; color:
+    # matches fill or stroke attributes and fill:/stroke: in style attributes, case-folded;
+    # unparsable XML fails every constraint
+render_png(svg: str) -> bytes | None        # resvg-py; None when rendering fails
+load_clip(cache_dir="data/clip") -> Callable[[bytes, str], float]
+    # imports open_clip lazily; returns cosine similarity x 100 of image vs text
+grade_svg(records, tasks, clip: Callable[[bytes, str], float]) -> list[dict]
+    # {"task_id", "version", "model", "sample", "renders": bool,
+    #  "constraints": float (share met, 0 when no svg), "clip": float | None (None unless rendered)}
 ```
 
-Graded on `exact_match` and `pairwise` tasks only (DAT and SVG replies are fixed formats).
+The CLIP text is the task's **neutral** brief without its last (format) line, the same for
+all five versions, so every version is scored against the same target.
 
-### Pairwise judge (task 2, `src/disc_mirror/graders/pairwise.py`)
+### CLI (task 3, `src/disc_mirror/cli.py`, consumes tasks 1 and 2)
 
-```python
-judge_pairs(records, tasks, judges: list[ModelSpec], out: str | Path,
-            completion=litellm.completion) -> list[dict]
-win_rates(judgments: list[dict]) -> dict[tuple[str, str, str], float]
-    # (model, style, judge or "all") -> styled win rate vs neutral; tie = 0.5;
-    # unparsed (winner null) left out of the rate
-```
+`disc-grade dat|svg --runs FILE --tasks DIR` (added to the existing subcommands; `--glove`
+and `--clip-cache` override the default directories). `disc-fetch [--data DIR]` downloads
+both models, skipping any already present, and prints where they went. Fetch code lives in
+`src/disc_mirror/fetch.py`.
 
-For each `pairwise` task × model × style × sample `s`, the styled answer for sample `s` is
-paired with the neutral answer for sample `s`, then judged in both orders by every judge,
-at temperature 0. The prompt is one user message: the task's **neutral** question,
-`Answer A`, `Answer B`, and `Reply with one line: WINNER: <A|B|TIE>`. Calls already in `out`
-are skipped (resume, as in the runner). Record:
+### Charter wording (task 3, `docs/CHARTER.md`)
 
-```json
-{"task_id": "...", "model": "claude", "style": "D", "sample": 0, "judge": "gemini-judge",
- "litellm_id": "...", "styled_first": true, "prompt": "...", "output": "...",
- "winner": "styled", "timestamp": "..."}
-```
-
-`winner` is `styled`, `neutral`, `tie` or null when the reply has no `WINNER:` line.
-
-### CLI (task 1, `src/disc_mirror/cli.py`, consumes task 2)
-
-`disc-grade exact|mirror|pairwise --runs FILE --tasks DIR`, plus for pairwise `--config FILE
-[--out FILE]` (default `runs/judge-<UTC timestamp>.jsonl`). Prints one table each; pairwise
-also prints the count of unparsed judgments.
+1. Item 3: "Every grader reads only the runner's output record and the task file." →
+   "Every grader reads only run records (including the same model's neutral answer) and the
+   task file."
+2. "Reproducible" check: "A fresh clone plus `uv sync` plus your API keys is all a real run
+   needs" → "A fresh clone plus `uv sync`, `uv run disc-fetch` (GloVe and CLIP weights) and
+   your API keys is all a real run needs".
+3. Constraints: "estimates cost as (input tokens + `max_tokens`) × samples" → "estimates cost
+   as (input tokens × input price + `max_tokens` × output price) × samples".
 
 ## Tasks
 
 | # | Owner | Owned paths | Does | Done when |
 |---|---|---|---|---|
-| 1 | text | src/disc_mirror/graders/__init__.py, graders/exact.py, graders/mirror.py, src/disc_mirror/cli.py, pyproject.toml, uv.lock, README.md, CLAUDE.md | Exact match, mirroring, `disc-grade` with all three subcommands, README "Graders" section, map entries | Done-when 1, 2, 5 |
-| 2 | judge | src/disc_mirror/graders/pairwise.py | Pairwise judge and win rates | Done-when 3 |
-| 3 | tests | tests/ | Tests at the seams below, on hand-made answers with known scores | They run, and fail only where code is missing |
+| 1 | dat | src/disc_mirror/graders/dat.py | GloVe loading, DAT score, `grade_dat` | Done-when 3, 6 (its part) |
+| 2 | svg | src/disc_mirror/graders/svg.py | SVG extraction, constraint checks, render, CLIP, `grade_svg` | Done-when 4, 6 (its part) |
+| 3 | cli | src/disc_mirror/cli.py, src/disc_mirror/fetch.py, src/disc_mirror/graders/mirror.py, pyproject.toml, README.md, CLAUDE.md, docs/CHARTER.md | `disc-grade dat\|svg`, `disc-fetch`, charter edits, README, map, directive trim | Done-when 2, 7, 8 |
+| 4 | tests | tests/ | Tests at the seams below, with fake vectors and a fake CLIP | They run, and fail only where code is missing |
+
+The orchestrator adds the three dependencies (`uv add`, checked with `uv sync`) on the
+branch before the build, so every task builds against them.
 
 ## Test seams
 
-- `grade_exact`: catches an answer taken from the wrong line, case or a trailing period
-  marking a right answer wrong, and a missing `ANSWER:` counted as right.
-- `text_features` / `mirror_deltas`: catches a wrong count on a known sentence, and a delta
-  taken against another model's neutral or across tasks.
-- `judge_pairs` with an injected completion: catches a wrong call count (orders × judges),
-  the style, model or task id leaking into the prompt, a styled answer always in slot A,
-  A/B mapped to the wrong winner after the swap, and a resumed call made twice.
-- `win_rates`: catches a tie not counted as 0.5 and unparsed judgments counted as losses.
-- `disc-grade exact` on a fixture run file: catches a missing entry point or table.
+- `dat_score` on 3-d fake vectors: catches a wrong pair count or scale, words past the 7th
+  used, unknown words counted, and a score given with fewer than 7 valid words.
+- `extract_svg`: catches a missed fenced block, prose around the SVG kept, and a reply with
+  no SVG returning text.
+- `check_constraints`: catches each grammar form wrongly matched (namespaced tags, a colour
+  only in `style`, upper-case hex, a `count:` one short, a `viewbox:` mismatch) and
+  unparsable XML passing.
+- `grade_svg` with a fake CLIP: catches CLIP called on an unrendered SVG, a styled version
+  scored against its own text instead of the neutral brief, and the format line in the text.
+- `disc-grade dat` on a fixture run file with fake vectors in `tmp_path`: catches a missing
+  entry point or table.
+- The import guard: catches `disc_mirror.cli` importing torch.
 
 ## Stop and ask
 
@@ -119,6 +135,4 @@ Every agent stops and reports BLOCKED when:
 
 ## Queue
 
-- m4-embed-graders: ~350 (DAT, SVG render + constraints + CLIP, `disc-fetch` for GloVe and
-  CLIP weights) plus the three charter wording edits from the m2 handoff; after m1 only
 - m5-paper: background and method draft, ~0 code lines; after m2–m4
