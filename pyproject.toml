@@ -6,7 +6,10 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "litellm",
+    "open-clip-torch>=4.2.2",
     "pyyaml",
+    "resvg-py>=0.5.0",
+    "torch>=2.15.0",
     "vadersentiment>=3.3.2",
 ]
 
@@ -14,6 +17,7 @@ dependencies = [
 disc-run = "disc_mirror.cli:main"
 disc-classify = "disc_mirror.cli:classify_main"
 disc-grade = "disc_mirror.cli:grade_main"
+disc-fetch = "disc_mirror.fetch:main"
 
 [dependency-groups]
 dev = ["pytest", "ruff"]

@@ -28,7 +28,8 @@ portfolio piece for research and AI-engineer roles.
    to the brief; mirroring by text counts (length, hedges, exclamations, directives,
    sentiment), reported as each style's difference from the same model's neutral answer.
    Pairwise judging runs each pair in both orders; a tie counts 0.5. Every grader reads
-   only the runner's output record and the task file. No human grading.
+   only run records (including the same model's neutral answer) and the task file. No
+   human grading.
 4. **Runner.** A thin script on LiteLLM (no custom provider adapters), driven by a config
    file (Claude, Gemini and one open-weights model, swappable). It writes one JSONL record
    per call: task id, version, model, sample index, prompt, raw output, token counts,
@@ -56,7 +57,7 @@ portfolio piece for research and AI-engineer roles.
 | Graders | `uv run pytest` passes; each grader has at least one test on a sample answer with a known score |
 | Dry run | `uv run <runner> --dry-run` prints the prompt count per model and a total cost estimate ≤ $50, and makes no network calls; token counts are estimated locally and prices per million tokens come from the model config file |
 | Paper draft | The background and method sections exist; every citation links to a source that resolves |
-| Reproducible | A fresh clone plus `uv sync` plus your API keys is all a real run needs (README states this) |
+| Reproducible | A fresh clone plus `uv sync`, `uv run disc-fetch` (GloVe and CLIP weights) and your API keys is all a real run needs (README states this) |
 
 ## Constraints
 
@@ -64,7 +65,8 @@ portfolio piece for research and AI-engineer roles.
 - Models are configured in one file; the list (Claude, Gemini, open-weights) may change
 - $50 total API budget for later runs, generation and judging included
 - Per-model token prices and `max_tokens` live in the model config file; the dry run
-  estimates cost as (input tokens + `max_tokens`) × samples, plus judge calls
+  estimates cost as (input tokens × input price + `max_tokens` × output price) × samples,
+  plus judge calls
 - Every dependency installs with `uv sync` alone, with no Homebrew or system libraries
   (for example, SVG renders through resvg-py, not cairosvg)
 - API keys are provided by Hampus and never committed

@@ -24,7 +24,7 @@ HEDGES = (
 )  # fmt: skip
 DIRECTIVES = (
     "must", "should", "need to", "do this", "make sure", "ensure", "avoid", "never", "always",
-    "immediately", "now", "first", "next", "start", "stop", "use", "ask", "tell", "set", "send",
+    "immediately",
 )  # fmt: skip
 GRADED = ("exact_match", "pairwise")
 

@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from conftest import FIXTURE_TASKS, VERSIONS, model, run_cli
+from conftest import FIXTURE_TASKS, VERSIONS, model, rec, run_cli
 
 
 def task(tid, grader, expected=None, tag="q"):
@@ -12,14 +12,6 @@ def task(tid, grader, expected=None, tag="q"):
         versions={v: f"Question {tag} in voice {v}." for v in VERSIONS},
         expected=expected or {},
     )
-
-
-def rec(tid, version, output, model_name="alpha", sample=0):
-    return {
-        "task_id": tid, "version": version, "model": model_name, "litellm_id": "x/y",
-        "sample": sample, "temperature": 0.7, "max_tokens": 10, "prompt": "p",
-        "output": output, "input_tokens": 1, "output_tokens": 1, "timestamp": "t",
-    }
 
 
 # exact match
