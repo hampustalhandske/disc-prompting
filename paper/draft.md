@@ -202,8 +202,8 @@ validates every file before a run.
 The rationales are specific to each task. The pen-price task, for example, is a one-step ratio
 with a single integer answer, so any accuracy drop would come from the style alone. The
 job-offer task has a pay and commute trade-off, where a voice that wants a quick verdict might
-get a thinner justification. The smiley face has the most constraints in the set (a circle
-count, a curved path, a colour and a canvas size), to test whether detail survives every voice.
+get a thinner justification. The traffic light has the most constraints in the set (a
+rectangle, three circles and three colours), to test whether detail survives every voice.
 
 ### Style-only rewrites
 
@@ -268,10 +268,11 @@ before calling anything when the estimate exceeds the budget.
 
 ### Graders
 
-Every grader reads only run records and task files, and each grades only the tasks whose
+Every grader reads run records, task files and, for DAT and SVG, the local model files; the
+pairwise grader also calls the judges named in the config. Each grades only the tasks whose
 `grader` field matches it. There is no human grading. Graders that compare against neutral skip
-a styled answer whose neutral partner is missing or whose output is empty, and print how many
-they skipped.
+a pair when the neutral record is missing or either output is missing (the provider returned no content), and
+print how many they skipped. An empty reply is still graded.
 
 #### Correctness: exact match
 
@@ -311,7 +312,8 @@ judge bias. The grader prints the mean score per model and version.
 
 For quality tasks, each styled answer is paired with the neutral answer for the same model,
 task and sample. Each judge sees the neutral question and the two answers labelled A and B, and
-is asked which answer is better, with a last line `WINNER: <A|B|TIE>`. The judge never sees the
+is asked which answer is better, in one line `WINNER: <A|B|TIE>`; if a reply has several, the
+last one counts. The judge never sees the
 styled question, the style, the task id or the model name, so it picks on quality alone. Every
 pair is judged in both orders, as Wang et al. (2023) recommend against position bias. A styled
 win counts 1, a tie 0.5 and a loss 0, and verdicts that cannot be parsed are left out of the
