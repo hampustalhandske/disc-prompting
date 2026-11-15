@@ -9,7 +9,7 @@ Mode: with you: show the review to Hampus before the PR
 ## Done when
 
 1. `uv sync` installs resvg-py, open_clip_torch and torch with no Homebrew or system libraries.
-2. `uv run disc-fetch` downloads GloVe 840B 300d and CLIP ViT-B-32 (OpenAI weights) into
+2. `uv run disc-fetch` downloads GloVe 840B 300d and CLIP ViT-B-32 (QuickGELU, OpenAI weights) into
    `data/`, which git ignores. The tests never call it.
 3. `uv run disc-grade dat --runs <jsonl> --tasks tasks` prints the mean DAT score per
    model × version, with the count of replies too short to score.
@@ -45,7 +45,7 @@ whose task has the matching `grader`. A record with `output: None` scores as uns
 data/glove/words.txt     one word per line; lowercase alphabetic words from the first
                          200,000 lines of glove.840B.300d.txt, in file order
 data/glove/vectors.npy   float32 array, shape (len(words), 300), row i = words.txt line i
-data/clip/               open_clip cache_dir for ViT-B-32, pretrained="openai"
+data/clip/               open_clip cache_dir for ViT-B-32-quickgelu, pretrained="openai"
 ```
 
 ### DAT (task 1, `src/disc_mirror/graders/dat.py`)
@@ -53,8 +53,8 @@ data/clip/               open_clip cache_dir for ViT-B-32, pretrained="openai"
 ```python
 load_glove(directory="data/glove") -> dict[str, numpy.ndarray]
 dat_score(words: list[str], vectors: dict) -> float | None
-    # Olson et al. (2021): lowercase and strip each line, keep words found in vectors, take
-    # the first 7; None if fewer than 7. Score = mean cosine distance over all 21 pairs x 100.
+    # Olson et al. (2021): clean each line (list numbering, bullets, punctuation, case),
+    # keep unique words found in vectors, take the first 7; None if fewer than 7. Score = mean cosine distance over all 21 pairs x 100.
 grade_dat(records, tasks, vectors) -> list[dict]
     # {"task_id", "version", "model", "sample", "valid_words": int, "score": float | None}
 ```

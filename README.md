@@ -9,7 +9,7 @@ runner sends each version, unchanged and with no system prompt, to the configure
     uv run disc-fetch
 
 `disc-fetch` downloads GloVe 840B 300d (first 200,000 lines, lowercase words) and CLIP
-ViT-B-32 (OpenAI weights) into `data/`, which git ignores; it skips what is already there.
+ViT-B-32 (QuickGELU, OpenAI weights) into `data/`, which git ignores; it skips what is already there.
 A real run needs `uv sync`, `uv run disc-fetch` and the API keys in the environment
 (`ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`). The tests need none of it.
 
@@ -69,12 +69,13 @@ how many they skipped.
   it picks on quality alone; running both orders cancels position bias. Prints the styled win
   rate (tie = 0.5) per model x style, overall and per judge, and the count of unparsed
   judgments. This makes live API calls; the default output is `runs/judge-<timestamp>.jsonl`.
-- **dat** (creativity tasks): the Divergent Association Task (Olson et al., 2021). The first
-  seven reply lines found in GloVe 840B are scored as the mean cosine distance over all 21
+- **dat** (creativity tasks): the Divergent Association Task (Olson et al., 2021). Each reply
+  line is cleaned (list numbering, bullets, punctuation, case), and the first seven unique
+  words found in GloVe 840B are scored as the mean cosine distance over all 21
   pairs x 100; a higher score means more semantically distant words. Replies with fewer than
   seven known words are not scored and are counted. Prints the mean per model x version.
 - **svg** (svg tasks): the first SVG in the reply is checked against the task's constraints
   (share met), rendered with resvg, and compared with the neutral brief (without its format
-  line) by CLIP ViT-B-32 cosine similarity x 100, the same text for all five versions. Prints
+  line) by CLIP ViT-B-32 (QuickGELU) cosine similarity x 100, the same text for all five versions. Prints
   per model x version the share that renders, the mean share of constraints met and the mean
   CLIP similarity. Needs `disc-fetch` first.
