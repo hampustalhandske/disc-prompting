@@ -13,7 +13,7 @@ worse.
 
 Much prompt research changes what the model is told to be. Persona and role prompts put a
 description of the model ("you are an expert mathematician") in the system prompt or before the
-question, and a line of work measures whether that helps (Zheng et al., 2023; Salewski et al.,
+question, and a line of work measures whether that helps (Zheng et al., 2023a; Salewski et al.,
 2023; Kong et al., 2023). This study changes the other side of the conversation. The model is
 never told to adopt a style, and there is no system prompt at all. Only the asker's voice
 changes, and everything the question asks for stays fixed.
@@ -40,7 +40,7 @@ and graders are in this repository, and the experiment has not been run yet.
 
 ### Persona prompting
 
-Zheng et al. (2023) tested 162 personas in system prompts on 4 families of models and 2,410
+Zheng et al. (2023a) tested 162 personas in system prompts on 4 families of models and 2,410
 factual questions, and found that adding a persona did not improve performance. They also found
 that the effect of a given persona can be largely random, and that automatically picking the
 best persona for a question is hard. Salewski et al. (2023) asked models to impersonate people
@@ -105,11 +105,10 @@ and characterises each style by its behaviour and priorities: D people prioritis
 results, i people enjoy collaboration, S people are patient and want a predictable environment,
 and C people focus on accuracy (Everything DiSC, n.d.).
 
-Independent evidence for DISC as a measure of personality is thin. Martinussen et al. (2001)
-gave 103 undergraduates both the ipsative (forced-choice) and the normative version of a
-DISC-type test, DISCUS, together with a Big Five questionnaire. The two versions were not
-equivalent, and the four DISC dimensions turned out to be combinations of Big Five traits
-rather than independent traits.
+Martinussen et al. (2001) tested one DISC-type instrument, DISCUS. They gave 103
+undergraduates both its ipsative and its normative version, along with an adjective-based Big
+Five test (5PFa). The two versions were not equivalent, and the four DISCUS dimensions were
+combinations of Big Five traits rather than independent traits.
 
 This study takes no position on whether DISC describes people. It uses the four labels only as
 a vocabulary for four voices that can be written down and checked. Whether the rewrites read as
@@ -158,8 +157,8 @@ use more directive phrases. i replies have more exclamation marks and more posit
 S replies use more hedges. C replies are longer.
 
 H2 (accuracy). Style does not change accuracy on correctness tasks by much. On questions with
-one right answer, persona and tone effects have been small, random or in opposite directions
-across studies (Zheng et al., 2023; Yin et al., 2024; Dobariya and Kumar, 2025). A style that
+one right answer, persona and tone effects have been random or in opposite directions across
+studies (Zheng et al., 2023a; Yin et al., 2024; Dobariya and Kumar, 2025). A style that
 leads the model to drop the `ANSWER:` line would show up here as lost accuracy.
 
 H3 (creativity). Style changes DAT scores. The direction is open: an enthusiastic i voice may
@@ -242,8 +241,8 @@ All settings come from `config/models.yaml`.
 
 The tested models cover three families: Anthropic, Google and Meta's open-weights Llama,
 reached through OpenRouter. They are sampled at temperature 0.7, three samples per prompt. That
-gives 21 tasks × 5 versions × 3 samples = 315 calls per model and 945 in total. Judges and the
-style classifier run at temperature 0.
+gives 21 tasks × 5 versions × 3 samples = 315 calls per model and 945 in total. The judges and
+the style classifier run at temperature 0, which is fixed in code, not in the config.
 
 The two judges come from different families. They are the same models as two of the tested
 models, so each judge also rates its own family's answers. Because judges can favour their own
@@ -390,7 +389,7 @@ https://archive.org/details/emotionsofnormal032195mbp
 
 Martinussen, M., Richardsen, A. M., & Vårum, H. W. (2001). Validation of an ipsative
 personality measure (DISCUS). Scandinavian Journal of Psychology, 42(5), 411-416.
-https://doi.org/10.1111/1467-9450.00253
+https://doi.org/10.1111/1467-9450.00253 (abstract: https://pubmed.ncbi.nlm.nih.gov/11771810/)
 
 Olson, J. A. (n.d.). Divergent Association Task, reference scoring code.
 https://github.com/jayolson/divergent-association-task
@@ -426,10 +425,9 @@ Yin, Z., Wang, H., Horio, K., Kawahara, D., & Sekine, S. (2024). Should we respe
 cross-lingual study on the influence of prompt politeness on LLM performance. arXiv:2402.14531.
 https://arxiv.org/abs/2402.14531
 
-Zheng, L., et al. (2023b). Judging LLM-as-a-judge with MT-Bench and Chatbot Arena. NeurIPS 2023
-Datasets and Benchmarks. https://arxiv.org/abs/2306.05685
-
-Zheng, M., Pei, J., Logeswaran, L., Lee, M., & Jurgens, D. (2023). When "a helpful assistant"
+Zheng, M., Pei, J., Logeswaran, L., Lee, M., & Jurgens, D. (2023a). When "a helpful assistant"
 is not really helpful: Personas in system prompts do not improve performances of large language
 models. Findings of EMNLP 2024. https://arxiv.org/abs/2311.10054
 
+Zheng, L., et al. (2023b). Judging LLM-as-a-judge with MT-Bench and Chatbot Arena. NeurIPS 2023
+Datasets and Benchmarks. https://arxiv.org/abs/2306.05685
