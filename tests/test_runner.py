@@ -79,7 +79,7 @@ def test_rerun_with_same_out_skips_recorded_calls_and_passes_retries(
     run(tasks, config, out, completion=fake_completion)
     assert {c["num_retries"] for c in fake_completion.calls} == {3}
     lines = out.read_text().splitlines()
-    out.write_text("\n".join(lines[:-5]) + "\n")
+    out.write_text("\n".join(lines[:-5]) + "\n" + lines[-5][:20])  # crash mid-write
     fake_completion.calls.clear()
     run(tasks, config, out, completion=fake_completion)
     assert len(fake_completion.calls) == 5
@@ -105,3 +105,15 @@ def test_missing_usage_and_content_are_recorded_as_null(make_config, tmp_path):
     run(load_tasks(FIXTURE_TASKS), config, out, completion=completion)
     for r in map(json.loads, out.read_text().splitlines()):
         assert (r["output"], r["input_tokens"], r["output_tokens"]) == (None, None, None)
+
+
+def test_rerun_with_another_setup_refuses_to_mix_records(make_config, fake_completion, tmp_path):
+    from disc_mirror.config import load_config
+    from disc_mirror.runner import run
+    from disc_mirror.tasks import load_tasks
+
+    tasks, out = load_tasks(FIXTURE_TASKS), tmp_path / "runs.jsonl"
+    run(tasks, load_config(make_config([model("a", 100)], [])), out, completion=fake_completion)
+    with pytest.raises(ValueError, match="another setup"):
+        run(tasks, load_config(make_config([model("a", 200)], [])), out,
+            completion=fake_completion)

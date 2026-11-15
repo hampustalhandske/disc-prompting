@@ -60,19 +60,45 @@ def estimate_cost(tasks: list[Task], config: Config) -> Estimate:
     return Estimate(prompts, model_usd, judge_usd)
 
 
+def load_jsonl(path: Path) -> list[dict]:
+    """Reads an append-only JSONL file; [] when it doesn't exist.
+
+    A last line with no newline was cut off by a crash: it is removed from the file and
+    ignored, so the next append starts on a fresh line. Blank lines are skipped.
+    """
+    if not path.exists():
+        return []
+    text = path.read_text()
+    if text and not text.endswith("\n"):
+        text = text[: text.rfind("\n") + 1]
+        path.write_text(text)
+    return [json.loads(line) for line in text.splitlines() if line.strip()]
+
+
 def run(
     tasks: list[Task], config: Config, out: str | Path, completion: Callable = litellm.completion
 ):
     """Calls every task x version x model x sample and appends one JSONL record per call to out.
 
     Calls already recorded in out are skipped, so rerunning with the same out resumes the run.
+    Raises ValueError when a recorded call used another litellm_id, temperature, max_tokens or
+    prompt than the current config and tasks, so one out never mixes two setups.
     """
     out = Path(out)
+    setup = {
+        (t.id, v, m.name): (m.litellm_id, config.temperature, m.max_tokens, t.versions[v])
+        for t in tasks
+        for v in VERSIONS
+        for m in config.models
+    }
     done = set()
-    if out.exists():
-        for line in out.read_text().splitlines():
-            r = json.loads(line)
-            done.add((r["task_id"], r["version"], r["model"], r["sample"]))
+    for r in load_jsonl(out):
+        key = (r["task_id"], r["version"], r["model"])
+        if key in setup and setup[key] != (
+            r["litellm_id"], r["temperature"], r["max_tokens"], r["prompt"]
+        ):
+            raise ValueError(f"{out}: {key} was recorded with another setup; use a new --out")
+        done.add((*key, r["sample"]))
     with out.open("a") as f:
         for t in tasks:
             for v in VERSIONS:
