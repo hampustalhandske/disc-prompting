@@ -50,6 +50,7 @@ def classify(
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0,
                 max_tokens=judge.max_tokens,
+                num_retries=3,
             )
             output = resp.choices[0].message.content
             match = _LABEL.search(output or "")
