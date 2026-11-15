@@ -1,0 +1,31 @@
+budget_usd: 50
+samples: 3
+temperature: 0.7
+# Prices are USD per million tokens; fill in current list prices before a live run.
+models:
+  - name: claude
+    litellm_id: anthropic/claude-sonnet-4-5
+    max_tokens: 1024
+    price_in_per_mtok: 3.0
+    price_out_per_mtok: 15.0
+  - name: gemini
+    litellm_id: gemini/gemini-2.5-flash
+    max_tokens: 1024
+    price_in_per_mtok: 0.30
+    price_out_per_mtok: 2.50
+  - name: open-weights
+    litellm_id: openrouter/meta-llama/llama-3.3-70b-instruct
+    max_tokens: 1024
+    price_in_per_mtok: 0.13
+    price_out_per_mtok: 0.40
+judges:
+  - name: claude-judge
+    litellm_id: anthropic/claude-sonnet-4-5
+    max_tokens: 512
+    price_in_per_mtok: 3.0
+    price_out_per_mtok: 15.0
+  - name: gemini-judge
+    litellm_id: gemini/gemini-2.5-flash
+    max_tokens: 512
+    price_in_per_mtok: 0.30
+    price_out_per_mtok: 2.50

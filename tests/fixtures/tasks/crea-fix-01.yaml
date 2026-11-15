@@ -1,0 +1,11 @@
+id: crea-fix-01
+area: creativity
+grader: dat
+rationale: "Fixture for the creativity area."
+versions:
+  neutral: "crea-fix-01 neutral text"
+  D: "crea-fix-01 D text"
+  i: "crea-fix-01 i text"
+  S: "crea-fix-01 S text"
+  C: "crea-fix-01 C text"
+expected: {}

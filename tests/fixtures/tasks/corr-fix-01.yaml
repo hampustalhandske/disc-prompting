@@ -1,0 +1,12 @@
+id: corr-fix-01
+area: correctness
+grader: exact_match
+rationale: "Fixture for the correctness area."
+versions:
+  neutral: "corr-fix-01 neutral text"
+  D: "corr-fix-01 D text"
+  i: "corr-fix-01 i text"
+  S: "corr-fix-01 S text"
+  C: "corr-fix-01 C text"
+expected:
+  answer: "42"

@@ -1,0 +1,13 @@
+id: gen-fix-01
+area: generation
+grader: svg
+rationale: "Fixture for the generation area."
+versions:
+  neutral: "gen-fix-01 neutral text"
+  D: "gen-fix-01 D text"
+  i: "gen-fix-01 i text"
+  S: "gen-fix-01 S text"
+  C: "gen-fix-01 C text"
+expected:
+  constraints:
+    - "contains a red circle"
