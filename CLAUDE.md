@@ -13,6 +13,7 @@ Parts
 - `src/disc_mirror/graders/`: `exact.py` (`grade_exact`), `mirror.py` (`text_features`, `mirror_deltas`), `pairwise.py` (`judge_pairs`, `win_rates`), `dat.py` (`known_words`, `dat_score`, `grade_dat`), `svg.py` (`extract_svg`, `check_constraints`, `render_png`, `load_clip`, `grade_svg`)
 - `tasks/`: the 21 real tasks (6 correctness, 3 DAT, 6 quality, 6 SVG)
 - `config/models.yaml`: tested models, judges, prices, samples, budget
+- `paper/draft.md`: paper background and method (m5); its Method must match the code, so update it when graders, tasks or config change
 - `tests/fixtures/`: one task per area, and the socket blocker for no-network tests
 
 Contracts (source of truth: docs/MILESTONE.md of m1 at e76a0c2, of m2, m3 and m4)

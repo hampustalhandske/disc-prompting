@@ -1,59 +1,69 @@
-# m4 handoff: embedding graders
+# m5 handoff: paper draft
 
-Decision: ship. Every review finding I agreed with is applied, including Should-fix and Nice-to-have items. Hampus decided the one measurement choice: DAT strips list markup before matching.
+Decision: ship. All four review findings (method statements that didn't match the code) are fixed. The code review also turned up issues in m4 code that's already merged. They're listed under Remaining work for a separate fix branch.
 
 ## Review in five minutes
 
 **Start here**
-1. `src/disc_mirror/graders/dat.py` (`known_words`, `dat_score`): the creativity score. Lines are cleaned ("1. Apple." becomes "apple"), repeats are dropped, and the first 7 known words are scored as mean cosine distance × 100.
-2. `src/disc_mirror/graders/svg.py` (`extract_svg`, `_holds`, `load_clip`): what counts as the model's SVG, how each constraint is checked, and CLIP loaded from local weights only.
-3. `docs/CHARTER.md` lines 31, 59 and 67: the three wording edits carried over from the m2 handoff.
+1. `paper/draft.md:97` (Limits of DISC): this section rests on one peer-reviewed study, Martinussen et al. (2001), checked against its abstract only.
+2. `paper/draft.md:150` (Hypotheses H1-H5): these hypotheses are the study's claims. Every later result gets read against them.
+3. `paper/draft.md:179` (Method): it describes the code as built, and each number in it was checked against `tasks/`, `config/models.yaml` and the graders.
 
 **Verify**
 
     uv run ruff check . && uv run pytest -q
 
 **Needs you**
-- Re-approve the charter in your terminal, since its wording changed in this PR.
-- None of this needs an API key. With `data/` fetched, `uv run disc-grade dat|svg --runs <jsonl> --tasks tasks` grades any run file locally.
+- Read the draft as its author. Check the voice, and whether the hypotheses are the ones you want to test.
+- Decide on the m4 grader fixes under Remaining work: open a `fix/grader-hardening` branch, or leave them.
+- `docs/disc_prompting_research_dossier.md` is still untracked in the working tree. Keep it out of the repo, or move it somewhere private.
 
 ## Summary
 
-Charter item 3 (Graders), the local half, is done.
-- `disc-grade dat` scores the creativity tasks on GloVe 840B.
-- `disc-grade svg` reports, per model × version, whether the SVG renders (resvg), the share of constraints met, and CLIP similarity to the neutral brief.
-- `disc-fetch` downloads both models into the git-ignored `data/`.
-
-The charter's wording now matches the code, and mirroring's directive list no longer counts context-free words such as "now" and "use".
+Charter item 1 (Paper: background and method) is done, so every v1 charter item is now built.
+- `paper/draft.md` has an introduction, related work and hypotheses H1-H5. The related work covers persona prompting, tone and politeness, mirroring and sycophancy, the limits of DISC, and the measures this study builds on.
+- It also has a Method section that matches the code.
+- The README links the draft.
 
 ## Decisions
 
-- **Dependencies:** resvg-py, open_clip_torch and torch, approved by Hampus. All three install with `uv sync` alone.
-- **GloVe:** `disc-fetch` streams the 2 GB zip and stops after 200,000 lines. It keeps 65,608 lowercase words (76 MB).
-- **CLIP:** ViT-B-32 with QuickGELU, the activation the OpenAI weights were trained with. The plain ViT-B-32 config gave a mismatch warning and slightly wrong scores. The weights are 577 MB.
-- **DAT cleaning (Hampus):** list numbering, bullets, punctuation and case are stripped before matching, as in Olson's reference scorer. Repeated words are dropped.
-- **CLIP target:** every version is scored against the same neutral brief, without its format line.
-- **`count:<tag>:<n>` means at least n**, per the m2 contract. The first draft said exactly n.
-- **No silent downloads:** `disc-grade svg` refuses to download and says to run `disc-fetch`.
-- **Unknown constraint kinds:** a kind like `colour:` now raises an error instead of scoring as unmet.
-- **Claude ran `disc-fetch` once**, with Hampus's OK, and graded hand-made answers with the real models:
-  - DAT: a list of pets scored 39.99, a varied list 84.35, and the same varied list numbered with punctuation also 84.35.
-  - CLIP: a correct traffic light scored 37.27 against its brief, a blue square 24.01.
+- **Writing style:** at Hampus's request, the draft was written to the humanizer skill and given a final pass with it.
+- **Dossier:** it was used only as a list of leads and is never committed. A review compared 8-word runs of the draft against it, and the only overlap is one reference title.
+- **Citation checks:** a cite-check agent fetched every source and graded 44 claims, with none Inaccurate. A second pass re-checked the seven claims that were fixed. Changes from the checks:
+  - "Independent evidence for DISC is thin" was dropped, because one study can't carry it.
+  - "small" was dropped from H2.
+  - H2 now says "factual and benchmark questions", to match Yin et al.
+  - The judge temperature (0) is now described as set in code.
+- **Martinussen link:** the DOI plus the PubMed abstract. Both block automated clients, so the claims were checked against the same abstract on the Europe PMC API.
+- **Not cited:** Price (2017) and Owen et al., because neither could be read.
+- **Review fixes to Method:**
+  - The most-constrained SVG task is the traffic light (5 constraints), not the smiley.
+  - The skip rule is "neutral missing or either output None", and empty replies are still graded.
+  - Graders also read local model files, and pairwise calls the judges.
+  - The judge's `WINNER:` reply is one line, and the last one counts.
 
 ## Remaining work
 
-- Next: m5-paper, the background and method draft (charter item 1). It makes no API calls.
-- The test/prod ratio on this branch is 0.48, just under the 0.5–0.7 band. That's the thin side, but every seam in the milestone is covered.
+- **m4 code-review findings** (merged code, outside this PR):
+  1. `graders/dat.py:35` `load_glove` raises a bare FileNotFoundError and doesn't say "run disc-fetch", which the binding decisions require. (Confirmed.)
+  2. `graders/svg.py:155` and `grade_dat` score a `None` output (no content from the provider) as a failure instead of skipping and counting it. (Confirmed.)
+  3. `graders/svg.py:44` `color:` misses colours set in a `<style>` block, `#f00` shorthand, `rgb()` and named colours.
+  4. `graders/dat.py:22`: a one-word preamble such as "Sure!" counts as a DAT word, and non-ASCII words get cut.
+  5. Not verified:
+     - `fetch.py` writes files without an atomic rename, so an interrupted fetch can leave files that later runs skip.
+     - `clip_weights` takes the first snapshot it finds.
+     - Constraint grammar is checked at grade time, not by `load_tasks`.
+- `tasks/gen-06-smiley.yaml` rationale says it has "the most constraints in the set" and "a curved path". Both are wrong: it has 4 constraints, and `element:path` doesn't check for a curve. I couldn't edit tasks in this milestone.
+- Next: v1 is complete. The remaining steps are the live runs Hampus does, then results and discussion (parked).
 
 ## Notes
 
-- `data/` holds about 650 MB after `disc-fetch`. Rerunning skips each model that's already fully there.
-- open_clip warns about an unauthenticated Hugging Face Hub during `disc-fetch` only. Grading loads the weights file directly and needs no network.
-- `load_clip` caches the text embedding per brief, so each task's brief is encoded once.
+- Wiley, PNAS, AAAI, Springer and PubMed block bots. Europe PMC's REST API serves abstracts and full open-access text.
+- When graders, tasks or config change, update `paper/draft.md` Method too. The map in CLAUDE.md says so.
 
 ## Numbers
 
-    Branch m4-embed-graders vs 62404dd
-      Production: +355 -3, net 352 of budget 400
-      Tests:      +179 -9, net 170 (test/prod 0.48 on this branch)
+    Branch m5-paper vs b894f99
+      Production: +0 -0, net 0 of budget 400
+      Tests:      +0 -0, net 0 (test/prod n/a on this branch)
       Repo:       1,129 production lines, 1,069 test lines (test/prod 0.95; band 0.5-0.7)

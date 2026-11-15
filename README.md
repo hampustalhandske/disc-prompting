@@ -3,6 +3,8 @@
 Do LLMs mirror how you ask? Each task has a neutral question and D, i, S, C rewrites; the
 runner sends each version, unchanged and with no system prompt, to the configured models.
 
+The paper draft (background, hypotheses and method) is in [paper/draft.md](paper/draft.md).
+
 ## Setup
 
     uv sync
