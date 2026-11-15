@@ -68,7 +68,9 @@ def test_run_writes_one_complete_record_per_call_with_only_the_version_text(
 def test_rerun_with_same_out_skips_recorded_calls_and_passes_retries(
     make_config, fake_completion, tmp_path
 ):
-    from disc_mirror import load_config, load_tasks, run
+    from disc_mirror.config import load_config
+    from disc_mirror.runner import run
+    from disc_mirror.tasks import load_tasks
 
     config = load_config(make_config([model("a", 100)], [], samples=2))
     tasks, out = load_tasks(FIXTURE_TASKS), tmp_path / "runs.jsonl"
@@ -87,7 +89,9 @@ def test_rerun_with_same_out_skips_recorded_calls_and_passes_retries(
 def test_missing_usage_and_content_are_recorded_as_null(make_config, tmp_path):
     import litellm
 
-    from disc_mirror import load_config, load_tasks, run
+    from disc_mirror.config import load_config
+    from disc_mirror.runner import run
+    from disc_mirror.tasks import load_tasks
 
     def completion(**kwargs):
         resp = litellm.ModelResponse(choices=[{"message": {"role": "assistant", "content": None}}])

@@ -2,7 +2,7 @@ import pytest
 import yaml
 from conftest import model
 
-from disc_mirror import load_config
+from disc_mirror.config import load_config
 
 
 @pytest.mark.parametrize(
