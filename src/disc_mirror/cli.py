@@ -1,4 +1,4 @@
-"""`disc-run` command line."""
+"""Command lines: `disc-run` (dry run or live run) and `disc-classify` (style classifier)."""
 
 import argparse
 from datetime import UTC, datetime
@@ -11,7 +11,7 @@ from disc_mirror.tasks import load_tasks
 
 
 def main(argv: list[str] | None = None) -> None:
-    ap = argparse.ArgumentParser(prog="disc-run", description=__doc__)
+    ap = argparse.ArgumentParser(prog="disc-run", description="`disc-run` command line.")
     ap.add_argument("--tasks", required=True, type=Path, help="directory of task YAML files")
     ap.add_argument("--config", required=True, type=Path, help="model config YAML")
     ap.add_argument("--out", type=Path, help="JSONL output (default runs/<timestamp>.jsonl)")

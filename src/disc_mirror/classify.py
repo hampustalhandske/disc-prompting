@@ -51,8 +51,8 @@ def classify(
                 temperature=0,
                 max_tokens=judge.max_tokens,
             )
-            output = resp.choices[0].message.content or ""
-            match = _LABEL.search(output)
+            output = resp.choices[0].message.content
+            match = _LABEL.search(output or "")
             record = {
                 "task_id": t.id,
                 "version": v,
