@@ -11,7 +11,7 @@ import litellm
 from disc_mirror.config import Config, ModelSpec
 from disc_mirror.tasks import VERSIONS, Task
 
-STYLES = ("D", "i", "S", "C")
+STYLES = VERSIONS[1:]
 
 
 @dataclass(frozen=True)
@@ -63,19 +63,32 @@ def estimate_cost(tasks: list[Task], config: Config) -> Estimate:
 def run(
     tasks: list[Task], config: Config, out: str | Path, completion: Callable = litellm.completion
 ):
-    """Calls every task x version x model x sample and appends one JSONL record per call to out."""
-    with Path(out).open("a") as f:
+    """Calls every task x version x model x sample and appends one JSONL record per call to out.
+
+    Calls already recorded in out are skipped, so rerunning with the same out resumes the run.
+    """
+    out = Path(out)
+    done = set()
+    if out.exists():
+        for line in out.read_text().splitlines():
+            r = json.loads(line)
+            done.add((r["task_id"], r["version"], r["model"], r["sample"]))
+    with out.open("a") as f:
         for t in tasks:
             for v in VERSIONS:
                 prompt = t.versions[v]
                 for m in config.models:
                     for sample in range(config.samples):
+                        if (t.id, v, m.name, sample) in done:
+                            continue
                         resp = completion(
                             model=m.litellm_id,
                             messages=[{"role": "user", "content": prompt}],
                             temperature=config.temperature,
                             max_tokens=m.max_tokens,
+                            num_retries=3,
                         )
+                        usage = resp.usage
                         record = {
                             "task_id": t.id,
                             "version": v,
@@ -86,8 +99,8 @@ def run(
                             "max_tokens": m.max_tokens,
                             "prompt": prompt,
                             "output": resp.choices[0].message.content,
-                            "input_tokens": resp.usage.prompt_tokens,
-                            "output_tokens": resp.usage.completion_tokens,
+                            "input_tokens": usage.prompt_tokens if usage else None,
+                            "output_tokens": usage.completion_tokens if usage else None,
                             "timestamp": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                         }
                         f.write(json.dumps(record) + "\n")
