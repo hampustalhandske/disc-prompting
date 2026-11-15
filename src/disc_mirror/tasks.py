@@ -50,6 +50,8 @@ def _parse(path: Path) -> Task:
 
     grader = raw["grader"]
     expected = raw.get("expected") or {}
+    if not isinstance(expected, dict):
+        raise fail("expected", "must be a mapping")
     if grader == "exact_match":
         if set(expected) != {"answer"} or not _nonempty_str(expected["answer"]):
             raise fail("expected", "for exact_match must be {answer: <non-empty string>}")
@@ -71,5 +73,14 @@ def _parse(path: Path) -> Task:
 
 
 def load_tasks(directory: str | Path) -> list[Task]:
-    """Loads every *.yaml task in a directory, sorted by file name."""
-    return [_parse(p) for p in sorted(Path(directory).glob("*.yaml"))]
+    """Loads every *.yaml task in a directory, sorted by file name.
+
+    Raises ValueError when the directory is missing or holds no *.yaml files.
+    """
+    directory = Path(directory)
+    if not directory.is_dir():
+        raise ValueError(f"{directory}: task directory not found")
+    paths = sorted(directory.glob("*.yaml"))
+    if not paths:
+        raise ValueError(f"{directory}: no *.yaml task files")
+    return [_parse(p) for p in paths]
