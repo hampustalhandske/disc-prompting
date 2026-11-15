@@ -1,0 +1,17 @@
+id: qual-01-landlord-email
+area: quality
+grader: pairwise
+rationale: >-
+  A practical email with a clear goal tests open-ended writing quality, where the asker's
+  style may carry into the wording of the email itself.
+versions:
+  neutral: |
+    Write an email to my landlord saying that the heating in my flat has not worked for 4 days and asking for a repair visit this week.
+  D: |
+    I need an email to my landlord. The heating in my flat has not worked for 4 days. I want a repair visit this week.
+  i: |
+    I just moved into my lovely new flat and I adore it, but the heating has not worked for 4 days! Could you write an email to my landlord asking for a repair visit this week?
+  S: |
+    No rush at all, I know these things happen. Could you help me write an email to my landlord? The heating in my flat has not worked for 4 days, and I'd like to ask for a repair visit this week. Thank you so much.
+  C: |
+    To be exact about the facts: the heating in my flat has not worked for 4 days, and I want a repair visit this week. Please write the email to my landlord stating both points.

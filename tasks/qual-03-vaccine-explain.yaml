@@ -1,0 +1,17 @@
+id: qual-03-vaccine-explain
+area: quality
+grader: pairwise
+rationale: >-
+  Explaining a science idea to a child tests clarity and audience fit, a quality that may
+  shift if the model mirrors the asker's warmth or precision.
+versions:
+  neutral: |
+    Explain to a 12-year-old how a vaccine teaches the immune system to fight a disease.
+  D: |
+    I need an explanation for a 12-year-old: how does a vaccine teach the immune system to fight a disease?
+  i: |
+    My niece is 12 and she's so curious about everything, I love it! How would you explain to her how a vaccine teaches the immune system to fight a disease?
+  S: |
+    No rush at all. Could you explain to a 12-year-old how a vaccine teaches the immune system to fight a disease? Thank you, I appreciate it.
+  C: |
+    To be exact about the audience: the reader is a 12-year-old. Explain how a vaccine teaches the immune system to fight a disease.

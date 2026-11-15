@@ -1,0 +1,27 @@
+id: gen-05-bar-chart
+area: generation
+grader: svg
+rationale: >-
+  A small bar chart needs a counted set of shapes, one colour and a title, which tests
+  structured, data-like generation rather than a picture.
+versions:
+  neutral: |
+    Draw a bar chart as an SVG image with 4 bars, each a rect filled with #336699, and a title in a text element that reads Sales.
+    Reply with one complete SVG document inside a single svg code block.
+  D: |
+    I need an SVG bar chart: 4 bars, each a rect filled with #336699, and a title in a text element that reads Sales.
+    Reply with one complete SVG document inside a single svg code block.
+  i: |
+    Our team had a fantastic quarter and I can't wait to show everyone! Could you draw a bar chart as an SVG image with 4 bars, each a rect filled with #336699, and a title in a text element that reads Sales?
+    Reply with one complete SVG document inside a single svg code block.
+  S: |
+    No rush at all. Could you draw a bar chart as an SVG image with 4 bars, each a rect filled with #336699, and a title in a text element that reads Sales? Thank you kindly.
+    Reply with one complete SVG document inside a single svg code block.
+  C: |
+    To be exact about the specification: an SVG bar chart with 4 bars, each a rect filled with #336699, and a title in a text element whose content is Sales.
+    Reply with one complete SVG document inside a single svg code block.
+expected:
+  constraints:
+    - "count:rect:4"
+    - "color:#336699"
+    - "text:Sales"

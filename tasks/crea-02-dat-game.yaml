@@ -1,0 +1,22 @@
+id: crea-02-dat-game
+area: creativity
+grader: dat
+rationale: >-
+  The same divergent-thinking measure framed as a party word game checks whether the
+  style effect on idea range holds when the request has a playful purpose.
+versions:
+  neutral: |
+    I am preparing a word game in which players score more points the less related their words are. Come up with nouns that are as unrelated to each other as possible, in every meaning and use. Use single common nouns only: no proper nouns and no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  D: |
+    I need a word list for a game where players score more points the less related their words are. Come up with nouns that are as unrelated to each other as possible, in every meaning and use. Single common nouns only: no proper nouns, no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  i: |
+    I'm hosting game night for my friends and I'm so excited about this new word game, where players score more points the less related their words are! Come up with nouns that are as unrelated to each other as possible, in every meaning and use. Use single common nouns only: no proper nouns and no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  S: |
+    No rush at all, I'm slowly getting a word game ready, one in which players score more points the less related their words are. Could you come up with nouns that are as unrelated to each other as possible, in every meaning and use? Please use single common nouns only: no proper nouns and no technical terms. Thank you kindly.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  C: |
+    To be exact about the game: players score more points the less related their words are, in every meaning and use. I want nouns that are as unrelated to each other as possible under that rule. Each must be a single common noun: no proper nouns and no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.

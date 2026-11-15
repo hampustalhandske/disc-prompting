@@ -1,0 +1,24 @@
+id: corr-02-heights
+area: correctness
+grader: exact_match
+rationale: >-
+  A chain of height comparisons with one name to find tests multi-step logical ordering,
+  where a careless reading of the asker's framing can swap neighbouring names.
+versions:
+  neutral: |
+    Six friends compare their heights. Ana is taller than Ben. Ben is taller than Cleo. Dev is shorter than Cleo but taller than Eli. Fay is taller than Ana. Who is the second shortest?
+    End your reply with a last line in the form ANSWER: <name>
+  D: |
+    I need one name. Six friends compared heights. Ana is taller than Ben. Ben is taller than Cleo. Dev is shorter than Cleo but taller than Eli. Fay is taller than Ana. Who is the second shortest?
+    End your reply with a last line in the form ANSWER: <name>
+  i: |
+    My friends and I had such a fun evening lining up for a group photo! Six of us compared heights. Ana is taller than Ben. Ben is taller than Cleo. Dev is shorter than Cleo but taller than Eli. Fay is taller than Ana. Who is the second shortest?
+    End your reply with a last line in the form ANSWER: <name>
+  S: |
+    No rush at all with this little puzzle, I hope it's a pleasant one. Six friends compare their heights. Ana is taller than Ben. Ben is taller than Cleo. Dev is shorter than Cleo but taller than Eli. Fay is taller than Ana. Who is the second shortest? Thank you for looking.
+    End your reply with a last line in the form ANSWER: <name>
+  C: |
+    To be exact, these are all the comparisons among the six friends, and each one is strict. Ana is taller than Ben. Ben is taller than Cleo. Dev is shorter than Cleo but taller than Eli. Fay is taller than Ana. Who is the second shortest?
+    End your reply with a last line in the form ANSWER: <name>
+expected:
+  answer: "Dev"

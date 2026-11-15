@@ -1,0 +1,22 @@
+id: crea-03-dat-story
+area: creativity
+grader: dat
+rationale: >-
+  The same divergent-thinking measure framed as seeds for a writing exercise checks
+  whether the style effect on idea range holds for a creative-writing purpose.
+versions:
+  neutral: |
+    For a writing exercise, I want seed words that are as far apart in meaning as possible, so the story has to connect very unlike things. Use single common nouns only: no proper nouns and no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  D: |
+    I need seed words for a writing exercise, as far apart in meaning as possible, so the story has to connect very unlike things. Single common nouns only: no proper nouns, no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  i: |
+    My writing group is trying a new exercise and we're all buzzing about it! We want seed words that are as far apart in meaning as possible, so the story has to connect very unlike things. Use single common nouns only: no proper nouns and no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  S: |
+    No rush at all, this is just a gentle writing exercise for myself. I'd like seed words that are as far apart in meaning as possible, so the story has to connect very unlike things. Please use single common nouns only: no proper nouns and no technical terms. Thank you.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  C: |
+    To be exact about the exercise: the seed words should be as far apart in meaning as possible, so the story has to connect very unlike things. Each must be a single common noun: no proper nouns and no technical terms.
+    Reply with exactly 10 nouns, one per line, and nothing else.

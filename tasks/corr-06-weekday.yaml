@@ -1,0 +1,24 @@
+id: corr-06-weekday
+area: correctness
+grader: exact_match
+rationale: >-
+  Finding the weekday of a leap day needs calendar reasoning or recall of a specific date,
+  which tests accuracy on a fact the model cannot simply pattern-match.
+versions:
+  neutral: |
+    What day of the week was 29 February 2024?
+    End your reply with a last line in the form ANSWER: <weekday>
+  D: |
+    I need the weekday. What day of the week was 29 February 2024?
+    End your reply with a last line in the form ANSWER: <weekday>
+  i: |
+    My cousin was born on a leap day and we're planning a surprise party for her, so exciting! What day of the week was 29 February 2024?
+    End your reply with a last line in the form ANSWER: <weekday>
+  S: |
+    No rush at all, I'm just filling in an old diary at my own pace. What day of the week was 29 February 2024? Thanks so much, I appreciate it.
+    End your reply with a last line in the form ANSWER: <weekday>
+  C: |
+    To be exact, I mean the Gregorian calendar date 29 February 2024. What day of the week was it?
+    End your reply with a last line in the form ANSWER: <weekday>
+expected:
+  answer: "Thursday"

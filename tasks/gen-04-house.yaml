@@ -1,0 +1,27 @@
+id: gen-04-house
+area: generation
+grader: svg
+rationale: >-
+  A house drawing needs several shapes of two kinds on a non-square canvas, which tests
+  composition and a viewBox that differs from the common square default.
+versions:
+  neutral: |
+    Draw a simple house as an SVG image. Use at least 2 rect elements, one for the wall and one for the door, and a polygon for the roof. Set the viewBox to 0 0 300 200.
+    Reply with one complete SVG document inside a single svg code block.
+  D: |
+    I need an SVG of a simple house. At least 2 rect elements, one for the wall and one for the door, and a polygon for the roof. The viewBox is 0 0 300 200.
+    Reply with one complete SVG document inside a single svg code block.
+  i: |
+    We just bought our first home and I'm so happy I want to put a little drawing of it on our invitations! Could you draw a simple house as an SVG image? Use at least 2 rect elements, one for the wall and one for the door, and a polygon for the roof. Set the viewBox to 0 0 300 200.
+    Reply with one complete SVG document inside a single svg code block.
+  S: |
+    No rush at all. Could you draw a simple house as an SVG image? Please use at least 2 rect elements, one for the wall and one for the door, and a polygon for the roof, with the viewBox set to 0 0 300 200. Thank you.
+    Reply with one complete SVG document inside a single svg code block.
+  C: |
+    To be exact about the specification: a simple house as an SVG image, with at least 2 rect elements (one for the wall, one for the door) and a polygon for the roof. The viewBox is 0 0 300 200.
+    Reply with one complete SVG document inside a single svg code block.
+expected:
+  constraints:
+    - "count:rect:2"
+    - "element:polygon"
+    - "viewbox:300 200"

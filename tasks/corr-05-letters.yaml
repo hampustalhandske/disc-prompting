@@ -1,0 +1,24 @@
+id: corr-05-letters
+area: correctness
+grader: exact_match
+rationale: >-
+  Counting letters across two words is a known weak spot for tokenised models, so it shows
+  whether the asker's style moves accuracy on a task the models often get wrong.
+versions:
+  neutral: |
+    How many times does the letter "r" appear in the phrase "strawberry raspberry"?
+    End your reply with a last line in the form ANSWER: <integer>
+  D: |
+    I need a count. How many times does the letter "r" appear in the phrase "strawberry raspberry"?
+    End your reply with a last line in the form ANSWER: <integer>
+  i: |
+    We're naming our new smoothie at the café and the whole team loves it! How many times does the letter "r" appear in the phrase "strawberry raspberry"?
+    End your reply with a last line in the form ANSWER: <integer>
+  S: |
+    No rush at all, it's only a small thing I've been wondering about. How many times does the letter "r" appear in the phrase "strawberry raspberry"? Thank you for your patience.
+    End your reply with a last line in the form ANSWER: <integer>
+  C: |
+    To be exact, I mean the lower-case letter "r", counted over both words of the phrase "strawberry raspberry". How many times does it appear?
+    End your reply with a last line in the form ANSWER: <integer>
+expected:
+  answer: "6"

@@ -1,0 +1,24 @@
+id: corr-01-pens
+area: correctness
+grader: exact_match
+rationale: >-
+  A one-step ratio problem with a single integer answer tests whether the asker's style
+  changes accuracy on easy arithmetic, where any drop would come from style alone.
+versions:
+  neutral: |
+    A shop sells pens at 3 for $2. How many pens can you buy with $14?
+    End your reply with a last line in the form ANSWER: <integer>
+  D: |
+    I need a pen count. The shop sells them at 3 for $2. I have $14. How many pens do I get?
+    End your reply with a last line in the form ANSWER: <integer>
+  i: |
+    I'm stocking up on pens for our team's craft afternoon and I'm so excited about it! The shop sells them at 3 for $2, and I've got $14 to spend. How many pens can I get?
+    End your reply with a last line in the form ANSWER: <integer>
+  S: |
+    No rush at all, whenever you have a moment. I'm buying pens at a shop that sells them at 3 for $2, and I have $14 with me. How many pens could I buy? Thank you kindly.
+    End your reply with a last line in the form ANSWER: <integer>
+  C: |
+    To be exact: the shop's listed price is 3 pens for $2, and my budget is precisely $14. What is the number of pens I can buy?
+    End your reply with a last line in the form ANSWER: <integer>
+expected:
+  answer: "21"

@@ -1,0 +1,17 @@
+id: qual-02-job-offer
+area: quality
+grader: pairwise
+rationale: >-
+  A two-option decision with a pay and commute trade-off tests the quality of advice and
+  its justification, where a style that wants a quick verdict might get a thinner one.
+versions:
+  neutral: |
+    I have two job offers. Job A pays $62,000 a year with a 45-minute commute each way. Job B pays $55,000 a year and is fully remote. Both are in my field and similar in responsibility. Which should I take, and why?
+  D: |
+    I need to pick a job. Job A pays $62,000 a year with a 45-minute commute each way. Job B pays $55,000 a year and is fully remote. Same field, similar responsibility. Which one, and why?
+  i: |
+    I'm thrilled, I got two job offers and I've been telling all my friends! Job A pays $62,000 a year with a 45-minute commute each way. Job B pays $55,000 a year and is fully remote. Both are in my field and similar in responsibility. Which should I take, and why?
+  S: |
+    No rush at all, I'm trying to think this through calmly. I have two job offers. Job A pays $62,000 a year with a 45-minute commute each way. Job B pays $55,000 a year and is fully remote. Both are in my field and similar in responsibility. Which should I take, and why? Thank you for helping me with this.
+  C: |
+    To be exact, here are the offers as written. Job A: $62,000 a year, with a 45-minute commute each way. Job B: $55,000 a year, fully remote. Both are in my field and similar in responsibility. Which should I take, and why?

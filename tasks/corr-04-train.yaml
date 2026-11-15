@@ -1,0 +1,24 @@
+id: corr-04-train
+area: correctness
+grader: exact_match
+rationale: >-
+  A time and speed problem that crosses the hour tests two-step arithmetic with a
+  formatted answer, a common place for slips when attention goes to the asker's tone.
+versions:
+  neutral: |
+    A train leaves at 09:40 and travels 150 km at a constant 60 km/h. At what time does it arrive? Use the 24-hour clock.
+    End your reply with a last line in the form ANSWER: <HH:MM>
+  D: |
+    I need the arrival time. The train leaves at 09:40 and covers 150 km at a constant 60 km/h. When does it arrive? Use the 24-hour clock.
+    End your reply with a last line in the form ANSWER: <HH:MM>
+  i: |
+    I'm taking the train to see my best friend and I can't wait! It leaves at 09:40 and travels 150 km at a constant 60 km/h. At what time will I arrive? Use the 24-hour clock.
+    End your reply with a last line in the form ANSWER: <HH:MM>
+  S: |
+    No rush at all, I'm just planning ahead a little. My train leaves at 09:40 and travels 150 km at a constant 60 km/h. At what time does it arrive? Use the 24-hour clock. Thank you, I appreciate it.
+    End your reply with a last line in the form ANSWER: <HH:MM>
+  C: |
+    To be exact: departure is at 09:40, the distance is 150 km, and the speed is a constant 60 km/h with no stops. At what time does the train arrive? Use the 24-hour clock.
+    End your reply with a last line in the form ANSWER: <HH:MM>
+expected:
+  answer: "12:10"

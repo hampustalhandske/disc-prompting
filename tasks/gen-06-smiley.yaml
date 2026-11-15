@@ -1,0 +1,28 @@
+id: gen-06-smiley
+area: generation
+grader: svg
+rationale: >-
+  A smiley face combines a circle count, a curved path, a colour and a small canvas, the
+  most constraints in the set, which tests whether detail survives every asker style.
+versions:
+  neutral: |
+    Draw a smiley face as an SVG image. Use 3 circles in total, a face filled with #ffd700 and 2 eyes, and a path for the mouth. Set the viewBox to 0 0 100 100.
+    Reply with one complete SVG document inside a single svg code block.
+  D: |
+    I need an SVG smiley face. 3 circles in total, a face filled with #ffd700 and 2 eyes, and a path for the mouth. The viewBox is 0 0 100 100.
+    Reply with one complete SVG document inside a single svg code block.
+  i: |
+    I'm making a birthday card for my best friend and I'm so excited about it! Could you draw a smiley face as an SVG image? Use 3 circles in total, a face filled with #ffd700 and 2 eyes, and a path for the mouth. Set the viewBox to 0 0 100 100.
+    Reply with one complete SVG document inside a single svg code block.
+  S: |
+    No rush at all. Could you draw a smiley face as an SVG image? Please use 3 circles in total, a face filled with #ffd700 and 2 eyes, and a path for the mouth, with the viewBox set to 0 0 100 100. Thank you so much.
+    Reply with one complete SVG document inside a single svg code block.
+  C: |
+    To be exact about the specification: a smiley face as an SVG image with 3 circles in total (a face filled with #ffd700 and 2 eyes) and a path for the mouth. The viewBox is 0 0 100 100.
+    Reply with one complete SVG document inside a single svg code block.
+expected:
+  constraints:
+    - "count:circle:3"
+    - "element:path"
+    - "color:#ffd700"
+    - "viewbox:100 100"
