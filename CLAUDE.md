@@ -9,6 +9,7 @@ Parts
 - `src/disc_mirror/stylecheck.py`: style-only check on rewrites (`check_style_only`)
 - `src/disc_mirror/classify.py`: blind DISC style classifier (`classify`, `summarize`)
 - `src/disc_mirror/cli.py`: the `disc-run`, `disc-classify` and `disc-grade` commands
+- `src/disc_mirror/fetch.py`: the `disc-fetch` command (GloVe and CLIP weights into `data/`)
 - `src/disc_mirror/graders/`: `exact.py` (`grade_exact`), `mirror.py` (`text_features`, `mirror_deltas`), `pairwise.py` (`judge_pairs`, `win_rates`)
 - `tasks/`: the 21 real tasks (6 correctness, 3 DAT, 6 quality, 6 SVG)
 - `config/models.yaml`: tested models, judges, prices, samples, budget

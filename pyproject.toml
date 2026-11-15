@@ -17,6 +17,7 @@ dependencies = [
 disc-run = "disc_mirror.cli:main"
 disc-classify = "disc_mirror.cli:classify_main"
 disc-grade = "disc_mirror.cli:grade_main"
+disc-fetch = "disc_mirror.fetch:main"
 
 [dependency-groups]
 dev = ["pytest", "ruff"]

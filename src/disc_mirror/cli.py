@@ -71,13 +71,15 @@ def classify_main(argv: list[str] | None = None) -> None:
 
 
 def grade_main(argv: list[str] | None = None) -> None:
-    """Grade a run file with `exact`, `mirror` or `pairwise` and print one table."""
+    """Grade a run file with `exact`, `mirror`, `pairwise`, `dat` or `svg` and print one table."""
     ap = argparse.ArgumentParser(prog="disc-grade", description="`disc-grade` command line.")
-    ap.add_argument("grader", choices=["exact", "mirror", "pairwise"])
+    ap.add_argument("grader", choices=["exact", "mirror", "pairwise", "dat", "svg"])
     ap.add_argument("--runs", required=True, type=Path, help="run-record JSONL file")
     ap.add_argument("--tasks", required=True, type=Path, help="directory of task YAML files")
     ap.add_argument("--config", type=Path, help="model config YAML (pairwise)")
     ap.add_argument("--out", type=Path, help="judge JSONL (default runs/judge-<timestamp>.jsonl)")
+    ap.add_argument("--glove", type=Path, default=Path("data/glove"), help="GloVe directory (dat)")
+    ap.add_argument("--clip-cache", type=Path, default=Path("data/clip"), help="CLIP cache (svg)")
     args = ap.parse_args(argv)
     if args.grader == "pairwise" and not args.config:
         ap.error("pairwise needs --config")
@@ -92,6 +94,31 @@ def grade_main(argv: list[str] | None = None) -> None:
         print("model\tversion\taccuracy\tn")
         for (model, version), ok in sorted(hits.items()):
             print(f"{model}\t{version}\t{sum(ok) / len(ok):.2f}\t{len(ok)}")
+    elif args.grader == "dat":
+        from disc_mirror.graders.dat import grade_dat, load_glove
+
+        scores = defaultdict(list)
+        for g in grade_dat(records, tasks, load_glove(args.glove)):
+            scores[(g["model"], g["version"])].append(g["score"])
+        print("model\tversion\tmean_dat\tn\ttoo_short")
+        for (model, version), vals in sorted(scores.items()):
+            scored = [v for v in vals if v is not None]
+            mean_dat = f"{sum(scored) / len(scored):.2f}" if scored else "n/a"
+            print(f"{model}\t{version}\t{mean_dat}\t{len(scored)}\t{len(vals) - len(scored)}")
+    elif args.grader == "svg":
+        from disc_mirror.graders.svg import grade_svg, load_clip
+
+        rows = defaultdict(list)
+        for g in grade_svg(records, tasks, load_clip(args.clip_cache)):
+            rows[(g["model"], g["version"])].append(g)
+        print("model\tversion\trenders\tconstraints\tclip\tn")
+        for (model, version), gs in sorted(rows.items()):
+            clips = [g["clip"] for g in gs if g["clip"] is not None]
+            clip = f"{sum(clips) / len(clips):.2f}" if clips else "n/a"
+            print(
+                f"{model}\t{version}\t{sum(g['renders'] for g in gs) / len(gs):.2f}"
+                f"\t{sum(g['constraints'] for g in gs) / len(gs):.2f}\t{clip}\t{len(gs)}"
+            )
     elif args.grader == "mirror":
         deltas = mirror_deltas(records, tasks)
         features = next(iter(deltas.values()), {})
