@@ -1,118 +1,113 @@
-# Milestone 2: task-set
+# Milestone 3: text-graders
 
-Serves: charter item 2 (Task set), plus the style-only check from "How we know it works"
-Estimate: ~130 net production lines of a 400 budget (task YAMLs don't count)
-Mode: away: open the PR after review and continue with the queue (m3 waits for the charter re-approval)
+Serves: charter item 3 (Graders), the three text measures: correctness by exact match,
+mirroring by text counts, open-ended quality by blind pairwise judging
+Estimate: ~320 net production lines of a 400 budget
+Mode: away: open the PR after review and continue with the queue
 
 ## Done when
 
-1. `tasks/` holds 21 task files that load with `load_tasks("tasks")`: 6 correctness,
-   3 creativity, 6 quality, 6 generation. Each has a rationale of at least one full sentence.
-2. `check_style_only(load_tasks("tasks"))` returns `[]`, run by `tests/test_task_set.py`.
-3. A planted break is caught: a fixture task whose D version changes a number, or whose
-   last line differs from neutral's, makes `check_style_only` name that task and version.
-4. `uv run disc-classify --help` runs, and with an injected completion function the
-   classifier writes one record per task × version, the prompt holds no task id or
-   version label, and the printed summary gives accuracy per version.
-5. `uv run disc-run --tasks tasks --config config/models.yaml --dry-run` prints a total
-   ≤ $50 with no network calls.
+1. `uv run disc-grade exact --runs <jsonl> --tasks tasks` prints accuracy per model × version,
+   on a hand-made run file, with no network calls.
+2. `uv run disc-grade mirror --runs <jsonl> --tasks tasks` prints, per model × style, each
+   feature's mean difference from the same model's neutral answers.
+3. `uv run disc-grade pairwise --runs <jsonl> --tasks tasks --config config/models.yaml`
+   is one command away from a live judge run; with an injected completion function it
+   writes 2 judge records (both orders) per judge × styled answer, and prints win rates
+   per model × style, overall and per judge.
+4. Each grader has at least one test on a hand-made sample answer with a known score.
+5. Each grader's rationale is written down: in its module docstring and in a README
+   "Graders" section.
 6. `uv run ruff check . && uv run pytest -q` passes.
-7. Handoff nits: the unused re-exports in `src/disc_mirror/__init__.py` are gone, and
-   `test_fixture_tasks_load_one_per_area` checks one task per area.
 
 ## Must not
 
-- Add a dependency, service or paid API without asking.
-- Make an API call anywhere, including the classifier: tests inject the completion function.
-- Tell the model how to answer in any version: no tone, length or "be direct" requests.
-  Only the asker's own voice changes. The fixed output-format line is the one exception
-  and is identical in all five versions.
-- Change the task-file or run-record contracts from m1.
-- Write graders (m3, m4).
+- Add a dependency, service or paid API without asking (vaderSentiment approved by Hampus).
+- Make an API call anywhere: tests inject the completion function.
+- Change the task-file or run-record contracts, the runner, or the tasks.
+- Show the judge which answer is styled, the style name, the task id or the model name.
+- Write the DAT or SVG graders (m4).
+- Add tests beyond the seams below: the repo's test/prod ratio is 1.49 against a 0.5–0.7 band.
 
 ## Contracts
 
-### Writing the five versions (task 1, read by the classifier in task 2)
+All graders read run records (the m1 shape) from a JSONL file plus the task files. Only
+records whose task has the matching `grader` are graded; others are ignored.
 
-The neutral version states the task plainly. Each rewrite is the same request written by
-an asker with that style, following `docs/disc_prompting_research_dossier.md` §3
-(constructive variants only), turned from instructions into the asker's voice:
-
-- D: brief, outcome-first, impatient with preamble ("I need X. ...").
-- i: warm, enthusiastic, personal, social context ("So excited about ...!").
-- S: calm, patient, considerate, reassuring ("No rush at all, ...").
-- C: precise, structured, cares about correctness and sources ("To be exact: ...").
-
-Same facts, numbers and constraints in all five. The last line of every `exact_match`,
-`dat` and `svg` version is the fixed format line, identical across the five:
-
-- exact_match: `End your reply with a last line in the form ANSWER: <answer>` (the
-  `<answer>` placeholder may be specialised per task, e.g. `ANSWER: <integer>`, still
-  identical across versions). `expected.answer` is the canonical answer.
-- dat: `Reply with exactly 10 nouns, one per line, and nothing else.`
-- svg: `Reply with one complete SVG document inside a single svg code block.`
-
-### SVG constraints (task 1 writes, m4's grader reads)
-
-Each string in `expected.constraints` is one of:
-
-```
-element:<tag>              at least one <tag> element, e.g. element:circle
-count:<tag>:<n>            at least n <tag> elements, e.g. count:rect:3
-color:<#rrggbb>            some fill or stroke attribute equals this hex, lower case
-text:<string>              a <text> element whose content contains <string>
-viewbox:<w> <h>            the root viewBox ends in "<w> <h>", e.g. viewbox:200 200
-```
-
-Every constraint must be stated in all five versions of the brief, in words.
-
-### `check_style_only(tasks: list[Task]) -> list[str]` (task 2, `src/disc_mirror/stylecheck.py`)
-
-Returns one problem string per failure, `"<task id> <version>: <problem>"`, empty when
-all pass. Compares each styled version with neutral:
-- every task: the multiset of numbers (regex `\d+(?:[.,]\d+)?`) is equal;
-- `exact_match`, `dat`, `svg`: the last non-empty line is identical;
-- `exact_match`: that last line contains `ANSWER:`.
-
-### Classifier (task 2, `src/disc_mirror/classify.py`)
+### Exact match (task 1, `src/disc_mirror/graders/exact.py`)
 
 ```python
-classify(tasks, judge: ModelSpec, out: Path, completion=litellm.completion, seed=0) -> list[dict]
-summarize(records: list[dict]) -> dict[str, float]   # version -> share labelled correctly
+extract_answer(output: str | None) -> str | None
+    # value after "ANSWER:" on the last non-empty line that has one; None if none
+grade_exact(records: list[dict], tasks: list[Task]) -> list[dict]
+    # one per exact_match record:
+    # {"task_id", "version", "model", "sample", "answer": str | None, "correct": bool}
 ```
 
-One call per task × version, in an order shuffled with `seed`, temperature 0. The prompt
-is one user message: a short description of the four styles and neutral, the question
-text, and `Reply with one line: STYLE: <neutral|D|i|S|C>`. No task id, version or area.
-Record (JSONL, one line per call):
+Comparison: both sides stripped, case-folded, trailing `.` removed. A missing answer is wrong.
+
+### Mirroring (task 1, `src/disc_mirror/graders/mirror.py`)
+
+```python
+text_features(output: str | None) -> dict[str, float]
+    # {"words", "hedges", "exclamations", "directives", "sentiment"}
+    # hedges and directives per 100 words, from fixed word lists in the module;
+    # exclamations = count of "!"; sentiment = mean VADER compound over sentences, in [-1, 1]
+mirror_deltas(records: list[dict], tasks: list[Task]) -> dict[tuple[str, str], dict[str, float]]
+    # (model, style) -> feature -> mean over (task, sample) of styled minus neutral
+```
+
+Graded on `exact_match` and `pairwise` tasks only (DAT and SVG replies are fixed formats).
+
+### Pairwise judge (task 2, `src/disc_mirror/graders/pairwise.py`)
+
+```python
+judge_pairs(records, tasks, judges: list[ModelSpec], out: str | Path,
+            completion=litellm.completion) -> list[dict]
+win_rates(judgments: list[dict]) -> dict[tuple[str, str, str], float]
+    # (model, style, judge or "all") -> styled win rate vs neutral; tie = 0.5;
+    # unparsed (winner null) left out of the rate
+```
+
+For each `pairwise` task × model × style × sample `s`, the styled answer for sample `s` is
+paired with the neutral answer for sample `s`, then judged in both orders by every judge,
+at temperature 0. The prompt is one user message: the task's **neutral** question,
+`Answer A`, `Answer B`, and `Reply with one line: WINNER: <A|B|TIE>`. Calls already in `out`
+are skipped (resume, as in the runner). Record:
 
 ```json
-{"task_id": "...", "version": "D", "judge": "claude", "litellm_id": "...",
- "prompt": "...", "output": "...", "label": "D", "timestamp": "..."}
+{"task_id": "...", "model": "claude", "style": "D", "sample": 0, "judge": "gemini-judge",
+ "litellm_id": "...", "styled_first": true, "prompt": "...", "output": "...",
+ "winner": "styled", "timestamp": "..."}
 ```
 
-`label` is null when the reply has no parseable `STYLE:` line. CLI:
-`disc-classify --tasks DIR --config FILE --judge NAME [--out FILE]` picks the judge by name
-from `judges:`, writes `runs/classify-<UTC timestamp>.jsonl` by default, prints
-`summarize` per version.
+`winner` is `styled`, `neutral`, `tie` or null when the reply has no `WINNER:` line.
+
+### CLI (task 1, `src/disc_mirror/cli.py`, consumes task 2)
+
+`disc-grade exact|mirror|pairwise --runs FILE --tasks DIR`, plus for pairwise `--config FILE
+[--out FILE]` (default `runs/judge-<UTC timestamp>.jsonl`). Prints one table each; pairwise
+also prints the count of unparsed judgments.
 
 ## Tasks
 
 | # | Owner | Owned paths | Does | Done when |
 |---|---|---|---|---|
-| 1 | tasks | tasks/ | Write the 21 task YAMLs with rationales, following the two writing contracts | Done-when 1, 2 |
-| 2 | code | src/disc_mirror/, pyproject.toml, README.md | `check_style_only`, the classifier and `disc-classify`, drop unused re-exports, README section on the task set and classifier | Done-when 4, 5 |
-| 3 | tests | tests/ | Tests at the seams below, fixtures with planted breaks, fix the misleading test name | They run, and fail only where code is missing |
+| 1 | text | src/disc_mirror/graders/__init__.py, graders/exact.py, graders/mirror.py, src/disc_mirror/cli.py, pyproject.toml, uv.lock, README.md, CLAUDE.md | Exact match, mirroring, `disc-grade` with all three subcommands, README "Graders" section, map entries | Done-when 1, 2, 5 |
+| 2 | judge | src/disc_mirror/graders/pairwise.py | Pairwise judge and win rates | Done-when 3 |
+| 3 | tests | tests/ | Tests at the seams below, on hand-made answers with known scores | They run, and fail only where code is missing |
 
 ## Test seams
 
-- `check_style_only` on fixture tasks: catches a changed number, a changed or missing
-  format line, and a false alarm on a clean task.
-- `check_style_only(load_tasks("tasks"))` and the area counts: catches a real task that
-  drifts in content, and a missing area.
-- `classify` with an injected completion: catches a leaked task id or version label in
-  the prompt, a wrong record count, an unparsed or misparsed label, and a wrong summary.
-- `disc-classify --help`: catches a missing entry point.
+- `grade_exact`: catches an answer taken from the wrong line, case or a trailing period
+  marking a right answer wrong, and a missing `ANSWER:` counted as right.
+- `text_features` / `mirror_deltas`: catches a wrong count on a known sentence, and a delta
+  taken against another model's neutral or across tasks.
+- `judge_pairs` with an injected completion: catches a wrong call count (orders × judges),
+  the style, model or task id leaking into the prompt, a styled answer always in slot A,
+  A/B mapped to the wrong winner after the swap, and a resumed call made twice.
+- `win_rates`: catches a tie not counted as 0.5 and unparsed judgments counted as losses.
+- `disc-grade exact` on a fixture run file: catches a missing entry point or table.
 
 ## Stop and ask
 
@@ -124,6 +119,6 @@ Every agent stops and reports BLOCKED when:
 
 ## Queue
 
-- m3-text-graders: ~350 (exact match, mirroring counts, pairwise judge); after m1 only
-- m4-embed-graders: ~350 (DAT, SVG render + constraints + CLIP); after m1 only
+- m4-embed-graders: ~350 (DAT, SVG render + constraints + CLIP, `disc-fetch` for GloVe and
+  CLIP weights) plus the three charter wording edits from the m2 handoff; after m1 only
 - m5-paper: background and method draft, ~0 code lines; after m2–m4
