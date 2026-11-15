@@ -21,12 +21,17 @@ def main(argv: list[str] | None = None) -> None:
     tasks = load_tasks(args.tasks)
     config = load_config(args.config)
 
+    est = estimate_cost(tasks, config)
     if args.dry_run:
-        est = estimate_cost(tasks, config)
         for name, n in est.prompts.items():
             print(f"{name}: {n} prompts, ${est.model_usd[name]:.4f}")
         print(f"judges: ${est.judge_usd:.4f}")
         print(f"total: ${est.total_usd:.4f} (budget ${config.budget_usd:.2f})")
+    if est.total_usd > config.budget_usd:
+        raise SystemExit(
+            f"estimated ${est.total_usd:.4f} exceeds budget ${config.budget_usd:.2f}"
+        )
+    if args.dry_run:
         return
 
     out = args.out or Path("runs") / f"{datetime.now(UTC):%Y%m%dT%H%M%SZ}.jsonl"
