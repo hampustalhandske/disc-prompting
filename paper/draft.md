@@ -156,8 +156,8 @@ model's reply to the neutral question for the same task and sample. D replies ar
 use more directive phrases. i replies have more exclamation marks and more positive sentiment.
 S replies use more hedges. C replies are longer.
 
-H2 (accuracy). Style does not change accuracy on correctness tasks by much. On questions with
-one right answer, persona and tone effects have been random or in opposite directions across
+H2 (accuracy). Style does not change accuracy on correctness tasks by much. On factual and
+benchmark questions, persona and tone effects have been random or in opposite directions across
 studies (Zheng et al., 2023a; Yin et al., 2024; Dobariya and Kumar, 2025). A style that
 leads the model to drop the `ANSWER:` line would show up here as lost accuracy.
 
