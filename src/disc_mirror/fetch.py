@@ -14,6 +14,8 @@ from pathlib import Path
 
 import numpy as np
 
+from disc_mirror.graders.svg import CLIP_MODEL, clip_weights
+
 GLOVE_URL = "https://downloads.cs.stanford.edu/nlp/data/glove.840B.300d.zip"
 GLOVE_LINES = 200_000
 DIM = 300
@@ -21,10 +23,12 @@ DIM = 300
 
 def _zip_lines(url: str):
     """Yield text lines of the first (deflated) member of a remote zip, streaming."""
-    with urllib.request.urlopen(url) as resp:  # noqa: S310
+    with urllib.request.urlopen(url, timeout=60) as resp:
         header = resp.read(30)
         if header[:4] != b"PK\x03\x04":
             raise SystemExit(f"{url} is not a zip file")
+        if struct.unpack("<H", header[8:10])[0] != 8:
+            raise SystemExit(f"{url}: first zip member is not deflate-compressed")
         name_len, extra_len = struct.unpack("<HH", header[26:30])
         resp.read(name_len + extra_len)
         inflate = zlib.decompressobj(-zlib.MAX_WBITS)
@@ -59,15 +63,13 @@ def fetch_glove(directory: Path) -> None:
 
 
 def fetch_clip(directory: Path) -> None:
-    """Download ViT-B-32 OpenAI weights into `directory` unless it already has files."""
-    if directory.is_dir() and any(directory.iterdir()):
+    """Download the CLIP OpenAI weights into `directory` unless they are fully there."""
+    if clip_weights(directory):
         print(f"clip already at {directory}")
         return
     import open_clip
 
-    open_clip.create_model_and_transforms(
-        "ViT-B-32-quickgelu", pretrained="openai", cache_dir=str(directory)
-    )
+    open_clip.create_model_and_transforms(CLIP_MODEL, pretrained="openai", cache_dir=str(directory))
     print(f"clip: ViT-B-32 to {directory}")
 
 
