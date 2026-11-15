@@ -17,7 +17,8 @@ from pathlib import Path
 import litellm
 
 from disc_mirror.config import ModelSpec
-from disc_mirror.runner import STYLES
+from disc_mirror.graders import pair_with_neutral
+from disc_mirror.runner import load_jsonl
 from disc_mirror.tasks import Task
 
 _PROMPT = """Question:
@@ -53,64 +54,53 @@ def judge_pairs(
 ) -> list[dict]:
     """Judges each styled answer against the neutral one in both orders and appends to out.
 
-    Calls already in out are skipped, so rerunning with the same out resumes. Returns every
-    judgment in out, including earlier ones.
+    Styled answers with no neutral partner or a None output are not judged;
+    `pair_with_neutral` counts them. Calls already in out are skipped, so rerunning with the
+    same out resumes. Returns every judgment in out, including earlier ones.
     """
     out = Path(out)
-    judgments = [json.loads(line) for line in out.read_text().splitlines()] if out.exists() else []
+    judgments = load_jsonl(out)
     done = {
         (j["task_id"], j["model"], j["style"], j["sample"], j["judge"], j["styled_first"])
         for j in judgments
     }
-    answers = {(r["task_id"], r["version"], r["model"], r["sample"]): r for r in records}
+    questions = {t.id: t.versions["neutral"] for t in tasks if t.grader == "pairwise"}
+    pairs, _ = pair_with_neutral(records, set(questions))
     with out.open("a") as f:
-        for t in (t for t in tasks if t.grader == "pairwise"):
-            for model in sorted({r["model"] for r in records if r["task_id"] == t.id}):
-                for style in STYLES:
-                    for sample in sorted(
-                        r["sample"]
-                        for r in records
-                        if (r["task_id"], r["version"], r["model"]) == (t.id, style, model)
-                    ):
-                        s = answers[(t.id, style, model, sample)]
-                        n = answers.get((t.id, "neutral", model, sample))
-                        if n is None:
-                            continue
-                        for judge in judges:
-                            for styled_first in (True, False):
-                                key = (t.id, model, style, sample, judge.name, styled_first)
-                                if key in done:
-                                    continue
-                                a, b = (s, n) if styled_first else (n, s)
-                                prompt = _PROMPT.format(
-                                    question=t.versions["neutral"],
-                                    a=a["output"],
-                                    b=b["output"],
-                                )
-                                resp = completion(
-                                    model=judge.litellm_id,
-                                    messages=[{"role": "user", "content": prompt}],
-                                    temperature=0,
-                                    max_tokens=judge.max_tokens,
-                                    num_retries=3,
-                                )
-                                output = resp.choices[0].message.content
-                                record = {
-                                    "task_id": t.id,
-                                    "model": model,
-                                    "style": style,
-                                    "sample": sample,
-                                    "judge": judge.name,
-                                    "litellm_id": judge.litellm_id,
-                                    "styled_first": styled_first,
-                                    "prompt": prompt,
-                                    "output": output,
-                                    "winner": _parse(output, styled_first),
-                                    "timestamp": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                                }
-                                f.write(json.dumps(record) + "\n")
-                                f.flush()
-                                judgments.append(record)
+        for s, n in pairs:
+            for judge in judges:
+                for styled_first in (True, False):
+                    key = (s["task_id"], s["model"], s["version"], s["sample"])
+                    if (*key, judge.name, styled_first) in done:
+                        continue
+                    a, b = (s, n) if styled_first else (n, s)
+                    prompt = _PROMPT.format(
+                        question=questions[s["task_id"]], a=a["output"], b=b["output"]
+                    )
+                    resp = completion(
+                        model=judge.litellm_id,
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0,
+                        max_tokens=judge.max_tokens,
+                        num_retries=3,
+                    )
+                    output = resp.choices[0].message.content
+                    record = {
+                        "task_id": s["task_id"],
+                        "model": s["model"],
+                        "style": s["version"],
+                        "sample": s["sample"],
+                        "judge": judge.name,
+                        "litellm_id": judge.litellm_id,
+                        "styled_first": styled_first,
+                        "prompt": prompt,
+                        "output": output,
+                        "winner": _parse(output, styled_first),
+                        "timestamp": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    }
+                    f.write(json.dumps(record) + "\n")
+                    f.flush()
+                    judgments.append(record)
     return judgments
 
 

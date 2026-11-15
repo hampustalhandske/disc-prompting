@@ -14,6 +14,7 @@ from statistics import mean
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+from disc_mirror.graders import pair_with_neutral
 from disc_mirror.tasks import Task
 
 HEDGES = (
@@ -57,17 +58,14 @@ def text_features(output: str | None) -> dict[str, float]:
 def mirror_deltas(
     records: list[dict], tasks: list[Task]
 ) -> dict[tuple[str, str], dict[str, float]]:
-    """(model, style) -> feature -> mean over (task, sample) of styled minus neutral."""
-    graded = {t.id for t in tasks if t.grader in GRADED}
-    feats: dict[tuple[str, str, str, int], dict[str, float]] = {}
-    for r in records:
-        if r["task_id"] in graded:
-            feats[(r["model"], r["version"], r["task_id"], r["sample"])] = text_features(
-                r["output"]
-            )
+    """(model, style) -> feature -> mean over (task, sample) of styled minus neutral.
+
+    Styled records with no neutral partner or a None output are left out; `pair_with_neutral`
+    counts them.
+    """
+    pairs, _ = pair_with_neutral(records, {t.id for t in tasks if t.grader in GRADED})
     diffs: dict[tuple[str, str], list[dict[str, float]]] = defaultdict(list)
-    for (model, version, task_id, sample), f in feats.items():
-        neutral = feats.get((model, "neutral", task_id, sample))
-        if version != "neutral" and neutral:
-            diffs[(model, version)].append({k: f[k] - neutral[k] for k in f})
+    for styled, neutral in pairs:
+        f, n = text_features(styled["output"]), text_features(neutral["output"])
+        diffs[(styled["model"], styled["version"])].append({k: f[k] - n[k] for k in f})
     return {key: {k: mean(d[k] for d in ds) for k in ds[0]} for key, ds in diffs.items()}

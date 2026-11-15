@@ -8,8 +8,9 @@ from pathlib import Path
 
 from disc_mirror.classify import classify, summarize
 from disc_mirror.config import load_config
+from disc_mirror.graders import pair_with_neutral
 from disc_mirror.graders.exact import grade_exact
-from disc_mirror.graders.mirror import mirror_deltas
+from disc_mirror.graders.mirror import GRADED, mirror_deltas
 from disc_mirror.graders.pairwise import judge_pairs, win_rates
 from disc_mirror.runner import estimate_cost, run
 from disc_mirror.tasks import load_tasks
@@ -97,6 +98,8 @@ def grade_main(argv: list[str] | None = None) -> None:
         print("model\tstyle\t" + "\t".join(features))
         for (model, style), d in sorted(deltas.items()):
             print(f"{model}\t{style}\t" + "\t".join(f"{v:+.2f}" for v in d.values()))
+        _, skipped = pair_with_neutral(records, {t.id for t in tasks if t.grader in GRADED})
+        print(f"skipped (no neutral or no output): {skipped}")
     else:
         out = args.out or Path("runs") / f"judge-{datetime.now(UTC):%Y%m%dT%H%M%SZ}.jsonl"
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -105,4 +108,6 @@ def grade_main(argv: list[str] | None = None) -> None:
         for (model, style, judge), rate in sorted(win_rates(judgments).items()):
             print(f"{model}\t{style}\t{judge}\t{rate:.2f}")
         print(f"unparsed: {sum(j['winner'] is None for j in judgments)}")
+        _, skipped = pair_with_neutral(records, {t.id for t in tasks if t.grader == "pairwise"})
+        print(f"skipped (no neutral or no output): {skipped}")
         print(f"wrote {out}")

@@ -1,11 +1,7 @@
 import json
-import re
-import subprocess
-import sys
-from pathlib import Path
 
 import pytest
-from conftest import FIXTURE_TASKS, ROOT, VERSIONS, model
+from conftest import FIXTURE_TASKS, VERSIONS, model, run_cli
 
 
 def task(tid, grader, expected=None, tag="q"):
@@ -65,7 +61,8 @@ def test_text_features_count_a_known_sentence():
     assert f["exclamations"] == 1
     assert f["hedges"] == pytest.approx(100 / 6)
     assert f["directives"] == pytest.approx(100 / 6)
-    assert -1 <= f["sentiment"] <= 1
+    assert f["sentiment"] == 0  # neither sentence carries VADER sentiment
+    assert text_features("I love this. It is wonderful!")["sentiment"] > 0.5
 
 
 def test_mirror_delta_uses_own_model_neutral_per_task_and_sample():
@@ -148,6 +145,16 @@ def test_judge_pairs_calls_both_orders_per_judge_without_leaks_and_maps_winner(
         assert "WINNER: <A|B|TIE>" in prompt
 
 
+def test_judge_pairs_never_judges_a_missing_output(pair_setup, tmp_path):
+    from disc_mirror.graders.pairwise import judge_pairs
+
+    tasks, records, judges = pair_setup
+    records = [dict(r, output=None) if r["version"] != "neutral" else r for r in records]
+    comp = make_completion("styled")
+    assert judge_pairs(records, tasks, judges, tmp_path / "j.jsonl", completion=comp) == []
+    assert comp.calls == []
+
+
 def test_judge_pairs_skips_calls_already_in_the_out_file(pair_setup, tmp_path):
     from disc_mirror.graders.pairwise import judge_pairs
 
@@ -184,14 +191,13 @@ def test_disc_grade_exact_prints_accuracy_per_model_and_version(tmp_path):
         rec("corr-fix-01", "neutral", "ANSWER: 42"),
         rec("corr-fix-01", "D", "ANSWER: 7"),
     ]))
-    exe = Path(sys.executable).parent / "disc-grade"
-    p = subprocess.run(
-        [str(exe), "exact", "--runs", str(runs), "--tasks", str(FIXTURE_TASKS)],
-        cwd=ROOT, capture_output=True, text=True,
+    net_log = tmp_path / "net.log"
+    p = run_cli(
+        "exact", "--runs", str(runs), "--tasks", str(FIXTURE_TASKS),
+        cmd="disc-grade", block_network=True, net_log=net_log,
     )
     assert p.returncode == 0, p.stderr
-    lines = p.stdout.splitlines()
-    neutral = next(x for x in lines if "alpha" in x and "neutral" in x)
-    wrong = next(x for x in lines if "alpha" in x and re.search(r"\bD\b", x))
-    assert re.search(r"\b1(\.0+)?\b|100", neutral)
-    assert re.search(r"\b0(\.0+)?\b", wrong)
+    rows = {tuple(x.split("\t")[:2]): x.split("\t")[2] for x in p.stdout.splitlines()}
+    assert rows[("alpha", "neutral")] == "1.00"
+    assert rows[("alpha", "D")] == "0.00"
+    assert not net_log.exists() or net_log.read_text() == ""
