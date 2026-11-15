@@ -13,6 +13,7 @@ Constraint grammar: `element:<tag>` (at least one), `count:<tag>:<n>` (at least 
 `text:<string>` (a text element containing it), `viewbox:<w> <h>`.
 """
 
+import functools
 import io
 import re
 import xml.etree.ElementTree as ET
@@ -21,7 +22,7 @@ from pathlib import Path
 
 from disc_mirror.tasks import Task
 
-_FENCE = re.compile(r"```(?:svg|xml)?[ \t]*\n(.*?)```", re.DOTALL | re.IGNORECASE)
+_FENCE = re.compile(r"^```(\w*)[ \t]*\n(.*?)^```", re.DOTALL | re.MULTILINE)
 _SPAN = re.compile(r"<svg\b.*?</svg\s*>", re.DOTALL | re.IGNORECASE)
 _PAINT = re.compile(r"(?:^|;)\s*(?:fill|stroke)\s*:\s*([^;]+)", re.IGNORECASE)
 
@@ -29,8 +30,8 @@ _PAINT = re.compile(r"(?:^|;)\s*(?:fill|stroke)\s*:\s*([^;]+)", re.IGNORECASE)
 def extract_svg(output: str | None) -> str | None:
     """SVG markup from a fenced block holding `<svg`, else the first `<svg>...</svg>` span."""
     text = output or ""
-    for block in _FENCE.findall(text):
-        if "<svg" in block.lower():
+    for lang, block in _FENCE.findall(text):
+        if lang.lower() in ("svg", "xml", "") and "<svg" in block.lower():
             return block.strip()
     match = _SPAN.search(text)
     return match.group(0) if match else None
@@ -64,8 +65,11 @@ def _holds(root: ET.Element, constraint: str) -> bool:
         return any(_local(el.tag) == "text" and arg in "".join(el.itertext()) for el in root.iter())
     if kind == "viewbox":
         box = root.get("viewBox", "").replace(",", " ").split()
-        return len(box) == 4 and box[2:] == arg.split()
-    return False
+        try:
+            return len(box) == 4 and [float(x) for x in box[2:]] == [float(x) for x in arg.split()]
+        except ValueError:
+            return False
+    raise ValueError(f"unknown constraint {constraint!r}")
 
 
 def check_constraints(svg: str, constraints: list[str]) -> list[bool]:
@@ -87,34 +91,56 @@ def render_png(svg: str) -> bytes | None:
         return None
 
 
-def load_clip(cache_dir: str | Path = "data/clip") -> Callable[[bytes, str], float]:
-    """CLIP ViT-B-32 (OpenAI weights) as a scorer: cosine similarity x 100 of image vs text.
+CLIP_MODEL = "ViT-B-32-quickgelu"  # the OpenAI weights were trained with QuickGELU
 
-    torch and open_clip are imported here, so other graders never load them.
+
+def clip_weights(cache_dir: str | Path) -> Path | None:
+    """Path of the downloaded CLIP weights under `cache_dir`; None if the download isn't done.
+
+    The Hugging Face cache links a file into `snapshots/` only once it is fully downloaded.
     """
+    found = sorted(Path(cache_dir).glob("models--*/snapshots/*/open_clip_model.safetensors"))
+    return found[0] if found else None
+
+
+def load_clip(cache_dir: str | Path = "data/clip") -> Callable[[bytes, str], float]:
+    """CLIP ViT-B-32 (QuickGELU, OpenAI weights) as a scorer: cosine similarity x 100.
+
+    Loads the weights from `cache_dir` only, never the network; raises FileNotFoundError
+    when `disc-fetch` hasn't downloaded them. torch and open_clip are imported here, so other
+    graders never load them.
+    """
+    weights = clip_weights(cache_dir)
+    if weights is None:
+        raise FileNotFoundError(f"no CLIP weights in {cache_dir}; run `uv run disc-fetch`")
     import open_clip
     import torch
     from PIL import Image
 
     model, _, preprocess = open_clip.create_model_and_transforms(
-        "ViT-B-32-quickgelu", pretrained="openai", cache_dir=str(cache_dir)
+        CLIP_MODEL, pretrained=str(weights)
     )
-    tokenizer = open_clip.get_tokenizer("ViT-B-32-quickgelu")
+    tokenizer = open_clip.get_tokenizer(CLIP_MODEL)
     model.eval()
+
+    @functools.cache
+    def encode_text(text: str):
+        with torch.no_grad():
+            return model.encode_text(tokenizer([text]))
 
     def score(png: bytes, text: str) -> float:
         image = preprocess(Image.open(io.BytesIO(png)).convert("RGB")).unsqueeze(0)
         with torch.no_grad():
             img = model.encode_image(image)
-            txt = model.encode_text(tokenizer([text]))
-        return float(torch.nn.functional.cosine_similarity(img, txt).item() * 100)
+        return float(torch.nn.functional.cosine_similarity(img, encode_text(text)).item() * 100)
 
     return score
 
 
 def _brief(task: Task) -> str:
-    """The neutral brief without its last (format) line."""
-    return "\n".join(task.versions["neutral"].strip().splitlines()[:-1]).strip()
+    """The neutral brief without its last (format) line; a one-line brief is kept whole."""
+    lines = task.versions["neutral"].strip().splitlines()
+    return "\n".join(lines[:-1] or lines).strip()
 
 
 def grade_svg(
