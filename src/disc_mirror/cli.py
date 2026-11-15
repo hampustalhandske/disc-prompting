@@ -10,6 +10,7 @@ from disc_mirror.classify import classify, summarize
 from disc_mirror.config import load_config
 from disc_mirror.graders.exact import grade_exact
 from disc_mirror.graders.mirror import mirror_deltas
+from disc_mirror.graders.pairwise import judge_pairs, win_rates
 from disc_mirror.runner import estimate_cost, run
 from disc_mirror.tasks import load_tasks
 
@@ -97,8 +98,6 @@ def grade_main(argv: list[str] | None = None) -> None:
         for (model, style), d in sorted(deltas.items()):
             print(f"{model}\t{style}\t" + "\t".join(f"{v:+.2f}" for v in d.values()))
     else:
-        from disc_mirror.graders.pairwise import judge_pairs, win_rates
-
         out = args.out or Path("runs") / f"judge-{datetime.now(UTC):%Y%m%dT%H%M%SZ}.jsonl"
         out.parent.mkdir(parents=True, exist_ok=True)
         judgments = judge_pairs(records, tasks, load_config(args.config).judges, out)
