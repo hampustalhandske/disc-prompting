@@ -37,6 +37,15 @@ def load_config(path: str | Path) -> Config:
             raise ValueError("samples must be an integer >= 1")
         if any(isinstance(x, bool) or not isinstance(x, int | float) for x in (temp, budget)):
             raise ValueError("temperature and budget_usd must be numbers")
+        for m in raw["models"] + raw["judges"]:
+            if not all(isinstance(m[k], str) and m[k] for k in ("name", "litellm_id")):
+                raise ValueError("name and litellm_id must be non-empty strings")
+            tokens = m["max_tokens"]
+            if not isinstance(tokens, int) or isinstance(tokens, bool) or tokens < 1:
+                raise ValueError(f"{m['name']}: max_tokens must be an integer >= 1")
+            prices = (m["price_in_per_mtok"], m["price_out_per_mtok"])
+            if any(isinstance(x, bool) or not isinstance(x, int | float) for x in prices):
+                raise ValueError(f"{m['name']}: prices must be numbers")
         names = [m["name"] for m in raw["models"] + raw["judges"]]
         if len(names) != len(set(names)):
             raise ValueError("duplicate model or judge names")

@@ -39,3 +39,28 @@ share labelled correctly per version and writes one JSONL record per call:
     uv run disc-classify --tasks tasks --config config/models.yaml --judge <name>
 
 The default output is `runs/classify-<timestamp>.jsonl`. This makes live API calls.
+
+## Graders
+
+    uv run disc-grade exact    --runs <jsonl> --tasks tasks
+    uv run disc-grade mirror   --runs <jsonl> --tasks tasks
+    uv run disc-grade pairwise --runs <jsonl> --tasks tasks --config config/models.yaml
+
+Each reads run records and the task files, and grades only tasks whose `grader` matches.
+`mirror` and `pairwise` skip a styled answer with no neutral partner or no output, and print
+how many they skipped.
+
+- **exact** (correctness tasks): the value after the last `ANSWER:` line is compared with the
+  task's expected answer, ignoring case, space and a trailing period. A missing `ANSWER:` is
+  wrong. A string match is the least biased measure when there is one right answer. Prints
+  accuracy per model x version.
+- **mirror** (exact_match and pairwise tasks): counts words, hedges and directives per 100
+  words, exclamation marks and mean VADER sentence sentiment, then prints per model x style
+  the mean difference from the same model's neutral answer to the same task and sample. It
+  shows whether the style moved the reply in the direction the style predicts, with no judge.
+- **pairwise** (quality tasks): each styled answer is paired with the neutral answer for the
+  same sample and shown to every judge in both orders (A/B), at temperature 0. The judge sees
+  only the neutral question and the two answers, never the style, task id or model name, so
+  it picks on quality alone; running both orders cancels position bias. Prints the styled win
+  rate (tie = 0.5) per model x style, overall and per judge, and the count of unparsed
+  judgments. This makes live API calls; the default output is `runs/judge-<timestamp>.jsonl`.

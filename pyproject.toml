@@ -4,11 +4,16 @@ version = "0.1.0"
 description = "Do LLMs mirror the DISC style of a question?"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = ["litellm", "pyyaml"]
+dependencies = [
+    "litellm",
+    "pyyaml",
+    "vadersentiment>=3.3.2",
+]
 
 [project.scripts]
 disc-run = "disc_mirror.cli:main"
 disc-classify = "disc_mirror.cli:classify_main"
+disc-grade = "disc_mirror.cli:grade_main"
 
 [dependency-groups]
 dev = ["pytest", "ruff"]

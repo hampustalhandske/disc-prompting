@@ -62,12 +62,12 @@ def test_dry_run_charges_local_token_count_of_every_prompt_at_input_price(make_c
     assert has_number(result.stdout, tokens * 10000 / 1e6, tol=0.01)
 
 
-@pytest.mark.parametrize("extra", [["--dry-run"], ["--out", "unused.jsonl"]])
-def test_over_budget_exits_nonzero_and_live_run_makes_no_call(make_config, tmp_path, extra):
+@pytest.mark.parametrize("dry_run", [True, False])
+def test_over_budget_exits_nonzero_and_live_run_makes_no_call(make_config, tmp_path, dry_run):
     path = make_config([model("a", 100, price_out=10)], [])
     path.write_text(path.read_text().replace("budget_usd: 50", "budget_usd: 0.001"))
     out = tmp_path / "out.jsonl"
-    args = ["--out", str(out)] if "--out" in extra else extra
+    args = ["--dry-run"] if dry_run else ["--out", str(out)]
     attempts = tmp_path / "net.log"
     result = run_cli(
         "--tasks", str(FIXTURE_TASKS), "--config", str(path), *args,
