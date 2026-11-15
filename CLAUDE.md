@@ -8,7 +8,8 @@ Parts
 - `src/disc_mirror/runner.py`: offline cost estimate (`estimate_cost`) and live LiteLLM runner (`run`)
 - `src/disc_mirror/stylecheck.py`: style-only check on rewrites (`check_style_only`)
 - `src/disc_mirror/classify.py`: blind DISC style classifier (`classify`, `summarize`)
-- `src/disc_mirror/cli.py`: the `disc-run` and `disc-classify` commands
+- `src/disc_mirror/cli.py`: the `disc-run`, `disc-classify` and `disc-grade` commands
+- `src/disc_mirror/graders/`: `exact.py` (`grade_exact`), `mirror.py` (`text_features`, `mirror_deltas`), `pairwise.py` (`judge_pairs`, `win_rates`)
 - `tasks/`: the 21 real tasks (6 correctness, 3 DAT, 6 quality, 6 SVG)
 - `config/models.yaml`: tested models, judges, prices, samples, budget
 - `tests/fixtures/`: one task per area, and the socket blocker for no-network tests
@@ -22,6 +23,7 @@ Contracts (source of truth: docs/MILESTONE.md of m1 at e76a0c2, and of m2)
 Commands
 - Test and lint: `uv run ruff check . && uv run pytest -q`
 - Dry run: `uv run disc-run --tasks tasks --config config/models.yaml --dry-run`
+- Grade: `uv run disc-grade exact|mirror|pairwise --runs <jsonl> --tasks tasks [--config config/models.yaml]` (pairwise makes live calls; Hampus runs it)
 - Style classifier (Hampus runs it): `uv run disc-classify --tasks tasks --config config/models.yaml --judge claude`
 
 Binding decisions
