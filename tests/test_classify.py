@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from conftest import ROOT, VERSIONS, model
+from conftest import FIXTURE_TASKS, ROOT, VERSIONS, model
 
 IDS = ["zq-alpha-77", "zq-beta-78", "zq-gamma-79"]
 
@@ -77,11 +77,13 @@ def test_one_record_per_task_and_version_with_contract_fields(tasks, judge, tmp_
         assert r["label"] == r["version"]
 
 
-def test_prompt_is_one_user_message_that_leaks_no_id_or_area(tasks, judge, tmp_path):
+def test_prompt_is_one_user_message_that_leaks_no_id_area_or_version_label(tasks, judge, tmp_path):
     from disc_mirror.classify import classify
 
     comp = make_completion(tasks, perfect)
     classify(tasks, judge, tmp_path / "c.jsonl", completion=comp)
+    questions = {t.versions[v] for t in tasks for v in VERSIONS}
+    frames = set()
     for call in comp.calls:
         assert call["temperature"] == 0
         assert call["model"] == "openai/judge-a"
@@ -90,7 +92,9 @@ def test_prompt_is_one_user_message_that_leaks_no_id_or_area(tasks, judge, tmp_p
         assert "STYLE: <neutral|D|i|S|C>" in prompt
         assert not any(tid in prompt for tid in IDS)
         assert "quality" not in prompt and "pairwise" not in prompt
-        assert "version:" not in prompt.lower()
+        question = next(q for q in questions if q in prompt)
+        frames.add(prompt.replace(question, ""))
+    assert len(frames) == 1, "prompt text outside the question differs between calls"
 
 
 def test_call_order_is_shuffled_and_follows_the_seed(tasks, judge, tmp_path):
@@ -158,3 +162,17 @@ def test_disc_classify_entry_point_prints_help():
     proc = subprocess.run([str(exe), "--help"], cwd=ROOT, capture_output=True, text=True)
     assert proc.returncode == 0
     assert "--judge" in proc.stdout and "--tasks" in proc.stdout
+
+
+def test_classify_main_prints_accuracy_per_version(make_config, tmp_path, monkeypatch, capsys):
+    import disc_mirror.cli as cli
+
+    records = [{"version": v, "label": v if v != "i" else None} for v in VERSIONS]
+    monkeypatch.setattr(cli, "classify", lambda *a, **k: records)
+    config = make_config([model("m", 10)], [model("judge-a", 50)])
+    cli.classify_main(
+        ["--tasks", str(FIXTURE_TASKS), "--config", str(config), "--judge", "judge-a",
+         "--out", str(tmp_path / "c.jsonl")]
+    )
+    lines = capsys.readouterr().out.splitlines()
+    assert "D: 1.00" in lines and "i: 0.00" in lines
