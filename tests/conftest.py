@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import sys
@@ -5,6 +6,9 @@ from pathlib import Path
 
 import pytest
 import yaml
+
+# Keeps litellm from fetching its model-cost map when a test imports it before disc_mirror.
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_TASKS = ROOT / "tests" / "fixtures" / "tasks"
@@ -62,13 +66,12 @@ def task_dir_with(tmp_path):
 
 def run_cli(*args, block_network=False, net_log=None):
     """Run the installed `disc-run` command from the repo root and return the completed process."""
-    import os
-
     env = dict(os.environ)
     if block_network:
         env["PYTHONPATH"] = str(NETBLOCK)
         if net_log:
             env["NETBLOCK_LOG"] = str(net_log)
+            env["NETBLOCK_LOADED"] = f"{net_log}.loaded"
     exe = Path(sys.executable).parent / "disc-run"
     return subprocess.run(
         [str(exe), *args], cwd=ROOT, env=env, capture_output=True, text=True

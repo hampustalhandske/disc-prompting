@@ -21,6 +21,7 @@ def test_dry_run_makes_no_network_call_and_prints_total(tmp_path):
         net_log=attempts,
     )
     assert result.returncode == 0, result.stderr
+    assert (tmp_path / "net_attempts.log.loaded").exists(), "network blocker never loaded"
     assert "total" in result.stdout.lower()
     assert not attempts.exists() or attempts.read_text() == "", attempts.read_text()
 

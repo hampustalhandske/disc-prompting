@@ -1,10 +1,14 @@
 """Makes every socket connection and DNS lookup fail, and logs each attempt.
 
 When the env var NETBLOCK_LOG names a file, one line per attempt is appended to it, so a
-caller that swallows the error still leaves evidence.
+caller that swallows the error still leaves evidence. When NETBLOCK_LOADED names a file,
+it is created on import, so a test can prove the blocker was active.
 """
 import os
 import socket
+
+if os.environ.get("NETBLOCK_LOADED"):
+    open(os.environ["NETBLOCK_LOADED"], "w").close()
 
 
 def _blocked(*args, **kwargs):
