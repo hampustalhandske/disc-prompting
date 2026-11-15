@@ -47,6 +47,8 @@ The default output is `runs/classify-<timestamp>.jsonl`. This makes live API cal
     uv run disc-grade pairwise --runs <jsonl> --tasks tasks --config config/models.yaml
 
 Each reads run records and the task files, and grades only tasks whose `grader` matches.
+`mirror` and `pairwise` skip a styled answer with no neutral partner or no output, and print
+how many they skipped.
 
 - **exact** (correctness tasks): the value after the last `ANSWER:` line is compared with the
   task's expected answer, ignoring case, space and a trailing period. A missing `ANSWER:` is
