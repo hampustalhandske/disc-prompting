@@ -3,22 +3,15 @@ import subprocess
 import sys
 
 import numpy as np
-from conftest import FIXTURE_TASKS, ROOT, VERSIONS, run_cli
+import pytest
+from conftest import FIXTURE_TASKS, ROOT, VERSIONS, rec, run_cli
 
 X, Y = np.eye(300, dtype=np.float32)[:2]
 # Four words point along X, three along Y: 12 of the 21 pairs are orthogonal (distance 1),
 # the other 9 are identical (distance 0), so the score is 12 / 21 * 100.
-VECTORS = {f"x{i}": X for i in range(4)} | {f"y{i}": Y for i in range(3)} | {"back": -X}
-SEVEN = ["x0", "x1", "x2", "x3", "y0", "y1", "y2"]
+VECTORS = {f"x{c}": X for c in "abcd"} | {f"y{c}": Y for c in "abc"} | {"back": -X}
+SEVEN = ["xa", "xb", "xc", "xd", "ya", "yb", "yc"]
 SEVEN_SCORE = 12 / 21 * 100
-
-
-def rec(tid, version, output, sample=0):
-    return {
-        "task_id": tid, "version": version, "model": "alpha", "litellm_id": "x/y",
-        "sample": sample, "temperature": 0.7, "max_tokens": 10, "prompt": "p",
-        "output": output, "input_tokens": 1, "output_tokens": 1, "timestamp": "t",
-    }
 
 
 def svg_task(constraints):
@@ -41,9 +34,9 @@ def test_dat_score_uses_21_pairs_first_7_known_words_and_none_below_7():
     from disc_mirror.graders.dat import dat_score
 
     assert abs(dat_score(SEVEN, VECTORS) - SEVEN_SCORE) < 1e-4
-    # case, padding, unknown words are dropped before taking 7; an 8th word (opposite
-    # direction) is never used
-    messy = [" X0 ", "nope", "x1", "X2", "x3", "zzz", "y0", "y1", "y2", "back"]
+    # numbering, bullets, punctuation, case and padding are cleaned; unknown and repeated
+    # words are dropped before taking 7; an 8th word (opposite direction) is never used
+    messy = [" 1. XA. ", "nope", "- xb", "XC!", "xa", "2) xd", "zzz", "ya", "**yb**", "yc", "back"]
     assert abs(dat_score(messy, VECTORS) - SEVEN_SCORE) < 1e-4
     assert dat_score(SEVEN[:6] + ["nope", "zzz"], VECTORS) is None
 
@@ -75,14 +68,13 @@ def test_disc_grade_dat_prints_mean_score_and_too_short_count(tmp_path):
     runs = tmp_path / "runs.jsonl"
     runs.write_text("\n".join(json.dumps(r) for r in [
         rec("crea-fix-01", "neutral", "\n".join(SEVEN)),
-        rec("crea-fix-01", "neutral", "x0\nx1", sample=1),
+        rec("crea-fix-01", "neutral", "xa\nxb", sample=1),
     ]))
     p = run_cli("dat", "--runs", str(runs), "--tasks", str(FIXTURE_TASKS),
                 "--glove", str(glove), cmd="disc-grade", block_network=True)
     assert p.returncode == 0, p.stderr
     line = next(ln for ln in p.stdout.splitlines() if "alpha" in ln)
-    assert "neutral" in line and "57.1" in line
-    assert "1" in line.split()  # one reply too short to score
+    assert line.split() == ["alpha", "neutral", "57.14", "1", "1"]  # mean, n, too short
 
 
 # SVG
@@ -95,6 +87,8 @@ def test_extract_svg_takes_fenced_or_bare_svg_only():
     assert extract_svg(f"```xml\n{doc}\n```").strip() == doc
     assert extract_svg(f"```\n{doc}\n```").strip() == doc
     assert extract_svg(f"Sure! {doc} Hope it helps.") == doc
+    css = "```css\n/* styles for <svg> */ svg { color: red; }\n```\n"
+    assert extract_svg(f"{css}```svg\n{doc}\n```\nnote").strip() == doc  # fences stay paired
     assert extract_svg("I cannot draw that.") is None
     assert extract_svg(None) is None
 
@@ -112,11 +106,13 @@ def test_check_constraints_grammar_forms():
         "count:circle:2", "count:circle:3",             # exactly enough, one short
         "color:#ff0000", "color:#00aa00", "color:#112233", "color:#abcdef",  # case, style
         "text:OPEN", "text:Sales",
-        "viewbox:300 200", "viewbox:100 100",
+        "viewbox:300 200", "viewbox:100 100", "viewbox:300.0 200",  # compared as numbers
     ]
     assert check_constraints(svg, cons) == [
-        True, False, True, False, True, True, True, False, True, False, True, False,
+        True, False, True, False, True, True, True, False, True, False, True, False, True,
     ]
+    with pytest.raises(ValueError, match="colour:#ff0000"):
+        check_constraints(svg, ["colour:#ff0000"])
     assert check_constraints("<svg><circle></svg>", ["element:circle", "count:circle:0"]) == [
         False, False,
     ]
@@ -152,6 +148,14 @@ def test_grade_svg_scores_clip_only_on_rendered_svg_against_neutral_brief():
     assert all(png[:4] == b"\x89PNG" for png, _ in calls)
     # neutral brief without its format line, identical for every version
     assert {t.strip() for _, t in calls} == {"Draw a red circle.\nUse a 10 by 10 canvas."}
+
+
+def test_load_clip_without_downloaded_weights_refuses_instead_of_downloading(tmp_path):
+    from disc_mirror.graders.svg import load_clip
+
+    (tmp_path / "models--x" / "blobs").mkdir(parents=True)  # an interrupted download
+    with pytest.raises(FileNotFoundError, match="disc-fetch"):
+        load_clip(tmp_path)
 
 
 # import guard

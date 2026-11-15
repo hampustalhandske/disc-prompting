@@ -16,6 +16,15 @@ NETBLOCK = ROOT / "tests" / "fixtures" / "netblock"
 VERSIONS = ["neutral", "D", "i", "S", "C"]
 
 
+def rec(tid, version, output, model_name="alpha", sample=0):
+    """A run record (m1 shape) with fixed filler for every field the graders don't read."""
+    return {
+        "task_id": tid, "version": version, "model": model_name, "litellm_id": "x/y",
+        "sample": sample, "temperature": 0.7, "max_tokens": 10, "prompt": "p",
+        "output": output, "input_tokens": 1, "output_tokens": 1, "timestamp": "t",
+    }
+
+
 @pytest.fixture
 def make_config(tmp_path):
     """Write a models.yaml with the given fields and return its path."""
