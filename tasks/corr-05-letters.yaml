@@ -18,7 +18,7 @@ versions:
     No rush at all, it's only a small thing I've been wondering about. How many times does the letter "r" appear in the phrase "strawberry raspberry"? Thank you for your patience.
     End your reply with a last line in the form ANSWER: <integer>
   C: |
-    To be exact, I mean the lower-case letter "r", counted over both words of the phrase "strawberry raspberry". How many times does it appear?
+    To be exact, I mean the letter "r" in the phrase "strawberry raspberry". How many times does it appear?
     End your reply with a last line in the form ANSWER: <integer>
 expected:
   answer: "6"

@@ -18,7 +18,7 @@ versions:
     No rush at all, I'm just filling in an old diary at my own pace. What day of the week was 29 February 2024? Thanks so much, I appreciate it.
     End your reply with a last line in the form ANSWER: <weekday>
   C: |
-    To be exact, I mean the Gregorian calendar date 29 February 2024. What day of the week was it?
+    To be exact, I mean the date 29 February 2024. What day of the week was it?
     End your reply with a last line in the form ANSWER: <weekday>
 expected:
   answer: "Thursday"

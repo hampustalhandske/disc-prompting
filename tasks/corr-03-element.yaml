@@ -18,7 +18,7 @@ versions:
     No rush at all, this is just something I'm curious about. Which chemical element has atomic number 79? Give its chemical symbol. Thanks so much for your help.
     End your reply with a last line in the form ANSWER: <symbol>
   C: |
-    To be exact, I mean the element whose nucleus has atomic number 79 on the standard periodic table. Which element is it? Give its chemical symbol.
+    To be exact, I mean the element with atomic number 79. Which element is it? Give its chemical symbol.
     End your reply with a last line in the form ANSWER: <symbol>
 expected:
   answer: "Au"
