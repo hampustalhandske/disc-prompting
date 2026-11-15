@@ -14,6 +14,7 @@ from disc_mirror.config import load_config
         {"temperature": "hot"},
         {"budget_usd": "lots"},
         {"judges": [model("a", 10)]},
+        {"judges": [dict(model("j", 10), max_tokens="512")]},
     ],
 )
 def test_load_config_rejects_bad_values(make_config, change):
