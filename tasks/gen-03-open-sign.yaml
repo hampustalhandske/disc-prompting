@@ -1,0 +1,27 @@
+id: gen-03-open-sign
+area: generation
+grader: svg
+rationale: >-
+  A shop sign combines a shape, an exact colour and a required word, which tests text
+  rendering as well as shape constraints.
+versions:
+  neutral: |
+    Draw a shop sign as an SVG image: a rect filled with #1e90ff, with a text element that reads OPEN.
+    Reply with one complete SVG document inside a single svg code block.
+  D: |
+    I need an SVG shop sign: a rect filled with #1e90ff, with a text element that reads OPEN.
+    Reply with one complete SVG document inside a single svg code block.
+  i: |
+    We're opening our little bakery and I'm over the moon! Could you draw our shop sign as an SVG image: a rect filled with #1e90ff, with a text element that reads OPEN?
+    Reply with one complete SVG document inside a single svg code block.
+  S: |
+    No rush at all. Could you draw a shop sign as an SVG image: a rect filled with #1e90ff, with a text element that reads OPEN? Thanks so much, I appreciate it.
+    Reply with one complete SVG document inside a single svg code block.
+  C: |
+    To be exact about the specification: an SVG shop sign made of a rect filled with #1e90ff and a text element whose content is OPEN.
+    Reply with one complete SVG document inside a single svg code block.
+expected:
+  constraints:
+    - "element:rect"
+    - "color:#1e90ff"
+    - "text:OPEN"

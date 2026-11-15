@@ -1,0 +1,27 @@
+id: gen-01-ball
+area: generation
+grader: svg
+rationale: >-
+  A single shape with one colour and a fixed canvas is the easiest SVG brief, so it sets
+  a baseline for whether the asker's style affects constraint-following at all.
+versions:
+  neutral: |
+    Draw a red ball on a plain background as an SVG image. The ball is a circle filled with the colour #ff0000. Set the viewBox to 0 0 200 200.
+    Reply with one complete SVG document inside a single svg code block.
+  D: |
+    I need an SVG of a red ball on a plain background. The ball is a circle filled with #ff0000. The viewBox is 0 0 200 200.
+    Reply with one complete SVG document inside a single svg code block.
+  i: |
+    I'm making a cheerful poster for my kid's football club and I love it so far! Could you draw a red ball on a plain background as an SVG image? The ball is a circle filled with the colour #ff0000. Set the viewBox to 0 0 200 200.
+    Reply with one complete SVG document inside a single svg code block.
+  S: |
+    No rush at all. Could you draw a red ball on a plain background as an SVG image? The ball is a circle filled with the colour #ff0000, and the viewBox is 0 0 200 200. Thank you so much.
+    Reply with one complete SVG document inside a single svg code block.
+  C: |
+    To be exact about the specification: an SVG image of a red ball on a plain background. The ball is a circle element filled with the colour #ff0000. The viewBox is 0 0 200 200.
+    Reply with one complete SVG document inside a single svg code block.
+expected:
+  constraints:
+    - "element:circle"
+    - "color:#ff0000"
+    - "viewbox:200 200"

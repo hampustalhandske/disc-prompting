@@ -1,0 +1,24 @@
+id: corr-03-element
+area: correctness
+grader: exact_match
+rationale: >-
+  A fact recall question with one accepted symbol tests whether the asker's style changes
+  plain knowledge retrieval, with no reasoning steps to go wrong.
+versions:
+  neutral: |
+    Which chemical element has atomic number 79? Give its chemical symbol.
+    End your reply with a last line in the form ANSWER: <symbol>
+  D: |
+    I need the symbol for the element with atomic number 79. Give its chemical symbol.
+    End your reply with a last line in the form ANSWER: <symbol>
+  i: |
+    My kid and I are making flashcards for her chemistry quiz and we're having a blast! Which chemical element has atomic number 79? Give its chemical symbol.
+    End your reply with a last line in the form ANSWER: <symbol>
+  S: |
+    No rush at all, this is just something I'm curious about. Which chemical element has atomic number 79? Give its chemical symbol. Thanks so much for your help.
+    End your reply with a last line in the form ANSWER: <symbol>
+  C: |
+    To be exact, I mean the element with atomic number 79. Which element is it? Give its chemical symbol.
+    End your reply with a last line in the form ANSWER: <symbol>
+expected:
+  answer: "Au"

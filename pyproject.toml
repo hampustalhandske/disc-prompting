@@ -8,6 +8,7 @@ dependencies = ["litellm", "pyyaml"]
 
 [project.scripts]
 disc-run = "disc_mirror.cli:main"
+disc-classify = "disc_mirror.cli:classify_main"
 
 [dependency-groups]
 dev = ["pytest", "ruff"]

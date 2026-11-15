@@ -1,0 +1,17 @@
+id: qual-05-bottle-copy
+area: quality
+grader: pairwise
+rationale: >-
+  Product copy from a fixed list of facts tests persuasive writing that stays true to the
+  facts, where a warm or precise asker may pull the copy toward hype or dryness.
+versions:
+  neutral: |
+    Write a product description for a reusable water bottle for an online shop. Facts: stainless steel, holds 750 ml, keeps drinks cold for 24 hours, and has a leak-proof lid.
+  D: |
+    I need a product description for a reusable water bottle in our online shop. Facts: stainless steel, holds 750 ml, keeps drinks cold for 24 hours, leak-proof lid.
+  i: |
+    We're launching our very first product in our little online shop and the whole team is so excited! It's a reusable water bottle. Could you write its product description? Facts: stainless steel, holds 750 ml, keeps drinks cold for 24 hours, and has a leak-proof lid.
+  S: |
+    No rush at all, we're getting our online shop ready bit by bit. Could you write a product description for our reusable water bottle? Facts: stainless steel, holds 750 ml, keeps drinks cold for 24 hours, and has a leak-proof lid. Thank you kindly.
+  C: |
+    To be exact, these are the verified product facts for the reusable water bottle in our online shop: stainless steel, holds 750 ml, keeps drinks cold for 24 hours, and has a leak-proof lid. Please write its product description.

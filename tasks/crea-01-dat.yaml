@@ -1,0 +1,23 @@
+id: crea-01-dat
+area: creativity
+grader: dat
+rationale: >-
+  The standard Divergent Association Task measures divergent thinking as the semantic
+  distance between nouns, so it shows whether the asker's style widens or narrows the
+  range of ideas.
+versions:
+  neutral: |
+    Think of nouns that are as different from each other as possible, in all meanings and uses of the words. Use only single words, only nouns, no proper nouns and no specialised vocabulary.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  D: |
+    I need nouns that are as different from each other as possible, in all meanings and uses of the words. Single words only, nouns only, no proper nouns, no specialised vocabulary.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  i: |
+    I love word games like this one, it's so much fun! Can you think of nouns that are as different from each other as possible, in all meanings and uses of the words? Use only single words, only nouns, no proper nouns and no specialised vocabulary.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  S: |
+    No rush at all, there's no wrong way to enjoy this. Could you think of nouns that are as different from each other as possible, in all meanings and uses of the words? Please use only single words, only nouns, no proper nouns and no specialised vocabulary. Thank you.
+    Reply with exactly 10 nouns, one per line, and nothing else.
+  C: |
+    To be exact about the rules: the nouns should be as different from each other as possible, in all meanings and uses of the words. Each entry must be a single word and a noun; proper nouns and specialised vocabulary do not count.
+    Reply with exactly 10 nouns, one per line, and nothing else.

@@ -1,0 +1,17 @@
+id: qual-04-half-marathon
+area: quality
+grader: pairwise
+rationale: >-
+  A training plan with a fixed starting point and deadline tests practical, safe advice,
+  where the asker's eagerness or caution might shift how ambitious the plan is.
+versions:
+  neutral: |
+    I currently run 5 km three times a week. I want to run my first half marathon in 12 weeks. What training plan should I follow?
+  D: |
+    I need a training plan. I run 5 km three times a week now. My first half marathon is in 12 weeks. What should I follow?
+  i: |
+    I just signed up for my first half marathon with my running club and I'm so excited! It's in 12 weeks, and right now I run 5 km three times a week. What training plan should I follow?
+  S: |
+    No rush at all, I'm just starting to think about this. I currently run 5 km three times a week, and I hope to run my first half marathon in 12 weeks. What training plan should I follow? Thank you so much.
+  C: |
+    To be exact about my baseline: I currently run 5 km, three times a week. My first half marathon is in 12 weeks. What training plan should I follow?

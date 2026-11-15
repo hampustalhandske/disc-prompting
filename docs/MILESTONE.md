@@ -1,101 +1,118 @@
-# Milestone 1: scaffold-runner
+# Milestone 2: task-set
 
-Serves: charter item 4 (Runner) and the task-file contract from item 2
-Estimate: ~300 net production lines of an 800 start budget
-Mode: away: open the PR after review and continue with the queue
+Serves: charter item 2 (Task set), plus the style-only check from "How we know it works"
+Estimate: ~130 net production lines of a 400 budget (task YAMLs don't count)
+Mode: away: open the PR after review and continue with the queue (m3 waits for the charter re-approval)
 
 ## Done when
 
-1. `uv sync` on a fresh clone installs everything with no Homebrew or system libraries.
-2. `uv run ruff check . && uv run pytest -q` passes.
-3. `uv run disc-run --tasks tests/fixtures/tasks --config config/models.yaml --dry-run`
-   prints prompt count and estimated cost per model, judge cost, and a total, and makes
-   no network calls (a test proves this with networking blocked).
-4. A task file that misses a version, an `area`, a `grader` or `rationale`, or has an
-   `expected` block that doesn't fit its grader, fails loading with a message naming the
-   file and the field.
-5. A live run (not executed in this milestone) is one command away: the same command
-   without `--dry-run` writes one JSONL record per call in the shape below.
-6. `.gitignore` and `.claude/never-push` exist.
+1. `tasks/` holds 21 task files that load with `load_tasks("tasks")`: 6 correctness,
+   3 creativity, 6 quality, 6 generation. Each has a rationale of at least one full sentence.
+2. `check_style_only(load_tasks("tasks"))` returns `[]`, run by `tests/test_task_set.py`.
+3. A planted break is caught: a fixture task whose D version changes a number, or whose
+   last line differs from neutral's, makes `check_style_only` name that task and version.
+4. `uv run disc-classify --help` runs, and with an injected completion function the
+   classifier writes one record per task × version, the prompt holds no task id or
+   version label, and the printed summary gives accuracy per version.
+5. `uv run disc-run --tasks tasks --config config/models.yaml --dry-run` prints a total
+   ≤ $50 with no network calls.
+6. `uv run ruff check . && uv run pytest -q` passes.
+7. Handoff nits: the unused re-exports in `src/disc_mirror/__init__.py` are gone, and
+   `test_fixture_tasks_load_one_per_area` checks one task per area.
 
 ## Must not
 
-- Add a dependency beyond litellm, pyyaml, pytest and ruff without asking.
-- Add a system prompt or any style instruction: the version text is the whole prompt.
-- Call any API, in code paths run by tests or by `--dry-run`. Nobody runs a live call in v1: Hampus sets up the endpoints and runs it later.
-- Write real tasks (that's m2) or graders (m3, m4).
+- Add a dependency, service or paid API without asking.
+- Make an API call anywhere, including the classifier: tests inject the completion function.
+- Tell the model how to answer in any version: no tone, length or "be direct" requests.
+  Only the asker's own voice changes. The fixed output-format line is the one exception
+  and is identical in all five versions.
+- Change the task-file or run-record contracts from m1.
+- Write graders (m3, m4).
 
 ## Contracts
 
-### Task file (YAML, one task per file)
+### Writing the five versions (task 1, read by the classifier in task 2)
 
-Produced by m2 authors and test fixtures, consumed by the loader in task 1.
+The neutral version states the task plainly. Each rewrite is the same request written by
+an asker with that style, following `docs/disc_prompting_research_dossier.md` §3
+(constructive variants only), turned from instructions into the asker's voice:
 
-```yaml
-id: corr-math-01                 # unique, matches the file name
-area: correctness                # correctness | creativity | quality | generation
-grader: exact_match              # exact_match | dat | pairwise | svg
-rationale: "Why this task is in the set."
-versions:                        # all five required, non-empty strings
-  neutral: "..."
-  D: "..."
-  i: "..."
-  S: "..."
-  C: "..."
-expected:                        # exact_match: {answer: str}
-  answer: "42"                   # svg: {constraints: [str, ...]}; dat, pairwise: {} or omitted
+- D: brief, outcome-first, impatient with preamble ("I need X. ...").
+- i: warm, enthusiastic, personal, social context ("So excited about ...!").
+- S: calm, patient, considerate, reassuring ("No rush at all, ...").
+- C: precise, structured, cares about correctness and sources ("To be exact: ...").
+
+Same facts, numbers and constraints in all five. The last line of every `exact_match`,
+`dat` and `svg` version is the fixed format line, identical across the five:
+
+- exact_match: `End your reply with a last line in the form ANSWER: <answer>` (the
+  `<answer>` placeholder may be specialised per task, e.g. `ANSWER: <integer>`, still
+  identical across versions). `expected.answer` is the canonical answer.
+- dat: `Reply with exactly 10 nouns, one per line, and nothing else.`
+- svg: `Reply with one complete SVG document inside a single svg code block.`
+
+### SVG constraints (task 1 writes, m4's grader reads)
+
+Each string in `expected.constraints` is one of:
+
+```
+element:<tag>              at least one <tag> element, e.g. element:circle
+count:<tag>:<n>            at least n <tag> elements, e.g. count:rect:3
+color:<#rrggbb>            some fill or stroke attribute equals this hex, lower case
+text:<string>              a <text> element whose content contains <string>
+viewbox:<w> <h>            the root viewBox ends in "<w> <h>", e.g. viewbox:200 200
 ```
 
-### Model config (`config/models.yaml`)
+Every constraint must be stated in all five versions of the brief, in words.
 
-Produced by task 1, consumed by task 2's tests.
+### `check_style_only(tasks: list[Task]) -> list[str]` (task 2, `src/disc_mirror/stylecheck.py`)
 
-```yaml
-budget_usd: 50
-samples: 3
-temperature: 0.7
-models:                          # tested models
-  - name: claude
-    litellm_id: anthropic/<model-id>
-    max_tokens: 1024
-    price_in_per_mtok: 0.0       # USD per million input tokens
-    price_out_per_mtok: 0.0
-judges:                          # same shape; used for pairwise cost only in m1
-  - name: ...
+Returns one problem string per failure, `"<task id> <version>: <problem>"`, empty when
+all pass. Compares each styled version with neutral:
+- every task: the multiset of numbers (regex `\d+(?:[.,]\d+)?`) is equal;
+- `exact_match`, `dat`, `svg`: the last non-empty line is identical;
+- `exact_match`: that last line contains `ANSWER:`.
+
+### Classifier (task 2, `src/disc_mirror/classify.py`)
+
+```python
+classify(tasks, judge: ModelSpec, out: Path, completion=litellm.completion, seed=0) -> list[dict]
+summarize(records: list[dict]) -> dict[str, float]   # version -> share labelled correctly
 ```
 
-### Run record (JSONL, one line per call)
-
-Produced by the runner, consumed by every grader in m3 and m4.
+One call per task × version, in an order shuffled with `seed`, temperature 0. The prompt
+is one user message: a short description of the four styles and neutral, the question
+text, and `Reply with one line: STYLE: <neutral|D|i|S|C>`. No task id, version or area.
+Record (JSONL, one line per call):
 
 ```json
-{"task_id": "corr-math-01", "version": "D", "model": "claude",
- "litellm_id": "anthropic/...", "sample": 0, "temperature": 0.7, "max_tokens": 1024,
- "prompt": "...", "output": "...", "input_tokens": 41, "output_tokens": 230,
- "timestamp": "2026-11-14T10:00:00Z"}
+{"task_id": "...", "version": "D", "judge": "claude", "litellm_id": "...",
+ "prompt": "...", "output": "...", "label": "D", "timestamp": "..."}
 ```
 
-### Dry-run cost
-
-Per model: for every task × 5 versions × `samples`, (local token count of the prompt ×
-input price + `max_tokens` × output price). Judges: for every `pairwise` task × tested
-model × 4 styles × `samples` × 2 orders × each judge, with input = both answers at
-`max_tokens` each plus the prompt, and output = the judge's `max_tokens`. Token counts come
-from `litellm.token_counter`, run locally.
+`label` is null when the reply has no parseable `STYLE:` line. CLI:
+`disc-classify --tasks DIR --config FILE --judge NAME [--out FILE]` picks the judge by name
+from `judges:`, writes `runs/classify-<UTC timestamp>.jsonl` by default, prints
+`summarize` per version.
 
 ## Tasks
 
 | # | Owner | Owned paths | Does | Done when |
 |---|---|---|---|---|
-| 1 | runner | pyproject.toml, uv.lock, src/disc_mirror/, config/models.yaml, README.md | Task loader + validation, config loader, dry-run cost estimate, live runner on LiteLLM writing run records, `disc-run` CLI | Done-when items 1, 3, 4, 5 |
-| 2 | tests | tests/ | Fixture tasks (one per area) and tests at the seams below | They run, and fail only where code is missing |
+| 1 | tasks | tasks/ | Write the 21 task YAMLs with rationales, following the two writing contracts | Done-when 1, 2 |
+| 2 | code | src/disc_mirror/, pyproject.toml, README.md | `check_style_only`, the classifier and `disc-classify`, drop unused re-exports, README section on the task set and classifier | Done-when 4, 5 |
+| 3 | tests | tests/ | Tests at the seams below, fixtures with planted breaks, fix the misleading test name | They run, and fail only where code is missing |
 
 ## Test seams
 
-- `load_tasks(dir)`: catches a missing version, an unknown area or grader, or an `expected` block that doesn't fit its grader, getting through silently.
-- `estimate_cost(tasks, config)`: catches wrong multiplication (versions, samples, both orders, judges) and judge cost charged on non-pairwise tasks.
-- `disc-run --dry-run`: catches any network call (sockets blocked in the test) and missing totals in the output.
-- `run(tasks, config, out, completion=...)`: with an injected completion function, catches a record missing a field, a system message or anything but the version text in the prompt, and a wrong record count.
+- `check_style_only` on fixture tasks: catches a changed number, a changed or missing
+  format line, and a false alarm on a clean task.
+- `check_style_only(load_tasks("tasks"))` and the area counts: catches a real task that
+  drifts in content, and a missing area.
+- `classify` with an injected completion: catches a leaked task id or version label in
+  the prompt, a wrong record count, an unparsed or misparsed label, and a wrong summary.
+- `disc-classify --help`: catches a missing entry point.
 
 ## Stop and ask
 
@@ -105,18 +122,8 @@ Every agent stops and reports BLOCKED when:
 - the budget checkpoint fires;
 - a "Done when" can't be met as written.
 
-## Decisions (2026-11-14, from Hampus)
-
-- Open-weights model via OpenRouter (a current Llama or Qwen instruct model).
-- Judges: Claude + Gemini; self-preference is reported, not hidden.
-- Embeddings and CLIP run locally: GloVe for DAT, open_clip + torch for SVG, fetched by a script, never committed.
-- Task set: ~6 tasks per area, 3 samples per prompt.
-- Style check: a blind LLM classifier script (built, not run) plus Hampus skimming the rewrites once.
-- No API calls are made by Claude anywhere in v1.
-
 ## Queue
 
-- m2-task-set: ~150 lines (style-only checker) plus the task YAMLs and rationales; needs the open questions on task count and style check
-- m3-text-graders: ~350 (exact match, mirroring counts, pairwise judge); after m1
-- m4-embed-graders: ~350 (DAT, SVG render + constraints + CLIP); needs the embeddings/CLIP decision; after m1
+- m3-text-graders: ~350 (exact match, mirroring counts, pairwise judge); after m1 only
+- m4-embed-graders: ~350 (DAT, SVG render + constraints + CLIP); after m1 only
 - m5-paper: background and method draft, ~0 code lines; after m2–m4

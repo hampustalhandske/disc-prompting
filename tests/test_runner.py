@@ -31,7 +31,9 @@ def fake_completion():
 def test_run_writes_one_complete_record_per_call_with_only_the_version_text(
     make_config, fake_completion, tmp_path
 ):
-    from disc_mirror import load_config, load_tasks, run
+    from disc_mirror.config import load_config
+    from disc_mirror.runner import run
+    from disc_mirror.tasks import load_tasks
 
     config = load_config(make_config([model("a", 100), model("b", 200)], [], samples=2))
     out = tmp_path / "runs.jsonl"

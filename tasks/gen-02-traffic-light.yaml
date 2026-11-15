@@ -1,0 +1,29 @@
+id: gen-02-traffic-light
+area: generation
+grader: svg
+rationale: >-
+  A traffic light needs a shape count and three exact colours in a fixed order, which tests
+  whether the asker's style changes how many stated details the model keeps.
+versions:
+  neutral: |
+    Draw a traffic light as an SVG image. Use a rect for the housing and 3 circles for the lights, filled with #ff0000 at the top, #ffcc00 in the middle and #00aa00 at the bottom.
+    Reply with one complete SVG document inside a single svg code block.
+  D: |
+    I need an SVG traffic light. A rect for the housing, 3 circles for the lights: #ff0000 at the top, #ffcc00 in the middle, #00aa00 at the bottom.
+    Reply with one complete SVG document inside a single svg code block.
+  i: |
+    My son's class is learning road safety and he's so proud to be making the poster! Could you draw a traffic light as an SVG image? Use a rect for the housing and 3 circles for the lights, filled with #ff0000 at the top, #ffcc00 in the middle and #00aa00 at the bottom.
+    Reply with one complete SVG document inside a single svg code block.
+  S: |
+    No rush at all. Could you draw a traffic light as an SVG image? Please use a rect for the housing and 3 circles for the lights, filled with #ff0000 at the top, #ffcc00 in the middle and #00aa00 at the bottom. Thank you kindly.
+    Reply with one complete SVG document inside a single svg code block.
+  C: |
+    To be exact about the specification: an SVG traffic light with a rect for the housing and 3 circles for the lights. Fill colours, from top to bottom: #ff0000, #ffcc00, #00aa00.
+    Reply with one complete SVG document inside a single svg code block.
+expected:
+  constraints:
+    - "element:rect"
+    - "count:circle:3"
+    - "color:#ff0000"
+    - "color:#ffcc00"
+    - "color:#00aa00"

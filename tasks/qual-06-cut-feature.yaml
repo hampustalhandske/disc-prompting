@@ -1,0 +1,17 @@
+id: qual-06-cut-feature
+area: quality
+grader: pairwise
+rationale: >-
+  A three-way trade-off between customer, user and compliance needs tests decision
+  quality under competing priorities, the hardest kind of open-ended task in the set.
+versions:
+  neutral: |
+    Our team of 5 launches an app in 3 weeks and must cut one of three planned features: offline mode (2 weeks of work, asked for by our biggest customer), dark mode (3 days of work, the most requested feature in user surveys), and data export (1 week of work, required for a compliance review next quarter). Which feature should we cut, and why?
+  D: |
+    I need a call on this. Our team of 5 launches an app in 3 weeks and one of three planned features has to go: offline mode (2 weeks of work, asked for by our biggest customer), dark mode (3 days of work, the most requested feature in user surveys), data export (1 week of work, required for a compliance review next quarter). Which do we cut, and why?
+  i: |
+    Our team of 5 is so excited, we launch our app in 3 weeks! The hard part is that we must cut one of three planned features: offline mode (2 weeks of work, asked for by our biggest customer), dark mode (3 days of work, the most requested feature in user surveys), and data export (1 week of work, required for a compliance review next quarter). Which feature should we cut, and why?
+  S: |
+    No rush at all, I know this is a tricky one. Our team of 5 launches an app in 3 weeks and must cut one of three planned features: offline mode (2 weeks of work, asked for by our biggest customer), dark mode (3 days of work, the most requested feature in user surveys), and data export (1 week of work, required for a compliance review next quarter). Which feature should we cut, and why? Thank you.
+  C: |
+    To be exact, here are the constraints. Team size: 5. Launch: in 3 weeks. We must cut one of three planned features: offline mode (2 weeks of work, asked for by our biggest customer), dark mode (3 days of work, the most requested feature in user surveys), and data export (1 week of work, required for a compliance review next quarter). Which feature should we cut, and why?

@@ -19,15 +19,17 @@ BAD_TASKS = {
 
 
 def test_fixture_tasks_load_one_per_area():
-    from disc_mirror import load_tasks
+    from disc_mirror.tasks import load_tasks
 
     tasks = load_tasks(FIXTURE_TASKS)
-    assert len(tasks) == 4
+    assert sorted(t.area for t in tasks) == [
+        "correctness", "creativity", "generation", "quality",
+    ]
 
 
 @pytest.mark.parametrize("mutate,field", BAD_TASKS.values(), ids=BAD_TASKS.keys())
 def test_invalid_task_fails_loading_naming_file_and_field(task_dir_with, mutate, field):
-    from disc_mirror import load_tasks
+    from disc_mirror.tasks import load_tasks
 
     d, f = task_dir_with(mutate)
     with pytest.raises(Exception) as err:
@@ -38,7 +40,7 @@ def test_invalid_task_fails_loading_naming_file_and_field(task_dir_with, mutate,
 
 @pytest.mark.parametrize("make_dir", [lambda p: p / "missing", lambda p: p])
 def test_missing_or_empty_task_dir_fails_loading(tmp_path, make_dir):
-    from disc_mirror import load_tasks
+    from disc_mirror.tasks import load_tasks
 
     with pytest.raises(ValueError, match="task"):
         load_tasks(make_dir(tmp_path))
